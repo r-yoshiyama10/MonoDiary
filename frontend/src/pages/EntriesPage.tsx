@@ -32,7 +32,7 @@ export function EntriesPage() {
     setError(null)
     try {
       const data = await api.getEntries(nextCursor)
-      setEntries((prev) => (nextCursor ? [...prev, ...data.entries] : data.entries))
+      setEntries((prev) => (nextCursor ? [...prev, ...data.items] : data.items))
       setCursor(data.next_cursor)
       setHasMore(data.next_cursor !== null)
     } catch {

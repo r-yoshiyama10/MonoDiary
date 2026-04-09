@@ -8,6 +8,6 @@ export interface DiaryEntry {
 }
 
 export interface EntriesResponse {
-  entries: DiaryEntry[]
+  items: DiaryEntry[]
   next_cursor: string | null
 }
