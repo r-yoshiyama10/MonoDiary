@@ -24,10 +24,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+export interface SearchParams {
+  q?: string
+  dateFrom?: string
+  dateTo?: string
+  sort?: 'desc' | 'asc'
+}
+
 export const api = {
-  getEntries: (cursor?: string, limit = 20): Promise<EntriesResponse> => {
+  getEntries: (cursor?: string, limit = 20, search?: SearchParams): Promise<EntriesResponse> => {
     const params = new URLSearchParams({ limit: String(limit) })
     if (cursor) params.set('cursor', cursor)
+    if (search?.q) params.set('q', search.q)
+    if (search?.dateFrom) params.set('date_from', search.dateFrom)
+    if (search?.dateTo) params.set('date_to', search.dateTo)
+    if (search?.sort) params.set('sort', search.sort)
     return request<EntriesResponse>(`/api/entries?${params}`)
   },
 
