@@ -5,14 +5,13 @@ import type { SearchParams } from '../lib/api'
 import { Layout } from '../components/Layout'
 import type { DiaryEntry } from '../types/entry'
 
-function formatDate(iso: string) {
+function formatDateParts(iso: string) {
   const d = new Date(iso)
-  return d.toLocaleDateString('ja-JP', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-  })
+  return {
+    year: d.toLocaleDateString('ja-JP', { year: 'numeric' }),
+    monthDay: d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }),
+    weekday: d.toLocaleDateString('ja-JP', { weekday: 'short' }),
+  }
 }
 
 function excerpt(text: string, len = 80) {
@@ -190,16 +189,29 @@ export function EntriesPage() {
       )}
 
       <ul className="space-y-3">
-        {entries.map((entry) => (
-          <li
-            key={entry.id}
-            onClick={() => navigate(`/entries/${entry.id}`)}
-            className="cursor-pointer rounded-2xl bg-white p-5 shadow-[0_2px_12px_rgba(120,100,80,0.07)] ring-1 ring-stone-200 transition hover:ring-stone-300 hover:shadow-[0_4px_16px_rgba(120,100,80,0.12)]"
-          >
-            <p className="mb-1 text-xs text-stone-400">{formatDate(entry.created_at)}</p>
-            <p className="text-sm leading-relaxed text-stone-700">{excerpt(entry.diary_text)}</p>
-          </li>
-        ))}
+        {entries.map((entry) => {
+          const { year, monthDay, weekday } = formatDateParts(entry.created_at)
+          return (
+            <li
+              key={entry.id}
+              onClick={() => navigate(`/entries/${entry.id}`)}
+              className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(120,100,80,0.07)] ring-1 ring-stone-200 transition hover:ring-stone-300 hover:shadow-[0_4px_16px_rgba(120,100,80,0.12)]"
+            >
+              <div className="flex items-stretch">
+                {/* 日付カラム */}
+                <div className="flex min-w-[84px] flex-col items-center justify-center gap-0.5 bg-[#f7f4ef] px-4 py-5 border-r border-stone-100">
+                  <span className="text-[10px] text-stone-400">{year}</span>
+                  <span className="text-sm font-semibold text-stone-700 leading-snug">{monthDay}</span>
+                  <span className="text-[10px] text-stone-400">{weekday}</span>
+                </div>
+                {/* 本文カラム */}
+                <div className="flex flex-1 items-center px-5 py-5">
+                  <p className="text-sm leading-relaxed text-stone-600">{excerpt(entry.diary_text)}</p>
+                </div>
+              </div>
+            </li>
+          )
+        })}
       </ul>
 
       {hasMore && entries.length > 0 && (
