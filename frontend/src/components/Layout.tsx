@@ -9,8 +9,11 @@ export function Layout({ children }: Props) {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    await api.logout()
-    navigate('/login', { replace: true })
+    try {
+      await api.logout()
+    } finally {
+      navigate('/login', { replace: true })
+    }
   }
 
   return (
