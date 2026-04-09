@@ -127,23 +127,45 @@ func decodeCursor(cursor string) (cursorPayload, error) {
 	return p, nil
 }
 
-func (r *EntryRepository) List(ctx context.Context, userID string, limit int, cursor string) ([]*domain.DiaryEntry, string, error) {
+func (r *EntryRepository) List(ctx context.Context, userID string, limit int, cursor string, filter usecase.ListFilter) ([]*domain.DiaryEntry, string, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
 
+	asc := filter.SortOrder == "asc"
+
 	q := r.db.WithContext(ctx).
-		Where("line_user_id = ?", userID).
-		Order("created_at DESC, id DESC").
-		Limit(limit + 1)
+		Where("line_user_id = ?", userID)
+
+	if filter.Query != "" {
+		like := "%" + filter.Query + "%"
+		q = q.Where("source_text ILIKE ? OR diary_text ILIKE ?", like, like)
+	}
+	if filter.DateFrom != nil {
+		q = q.Where("created_at >= ?", filter.DateFrom)
+	}
+	if filter.DateTo != nil {
+		q = q.Where("created_at < ?", filter.DateTo)
+	}
+
+	if asc {
+		q = q.Order("created_at ASC, id ASC")
+	} else {
+		q = q.Order("created_at DESC, id DESC")
+	}
+	q = q.Limit(limit + 1)
 
 	if cursor != "" {
 		p, err := decodeCursor(cursor)
 		if err != nil {
 			return nil, "", err
 		}
-		// (created_at, id) の複合降順ソートに対応するカーソル条件（詳細設計 4.1）
-		q = q.Where("created_at < ? OR (created_at = ? AND id < ?)", p.CreatedAt, p.CreatedAt, p.ID)
+		if asc {
+			q = q.Where("created_at > ? OR (created_at = ? AND id > ?)", p.CreatedAt, p.CreatedAt, p.ID)
+		} else {
+			// (created_at, id) の複合降順ソートに対応するカーソル条件（詳細設計 4.1）
+			q = q.Where("created_at < ? OR (created_at = ? AND id < ?)", p.CreatedAt, p.CreatedAt, p.ID)
+		}
 	}
 
 	var models []entryModel

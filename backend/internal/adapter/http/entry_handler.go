@@ -12,6 +12,8 @@ import (
 	"monodiary/internal/usecase"
 )
 
+const dateFmt = "2006-01-02"
+
 type entryHandler struct {
 	repo   usecase.EntryRepository
 	gen    usecase.DiaryGenerator
@@ -94,8 +96,29 @@ func (h *entryHandler) list(c echo.Context) error {
 	}
 	cursor := c.QueryParam("cursor")
 
+	var filter usecase.ListFilter
+	filter.Query = c.QueryParam("q")
+	filter.SortOrder = c.QueryParam("sort")
+
+	if dateFromStr := c.QueryParam("date_from"); dateFromStr != "" {
+		t, err := time.Parse(dateFmt, dateFromStr)
+		if err != nil {
+			return httperr.BadRequest(c, "date_from は YYYY-MM-DD 形式で指定してください")
+		}
+		filter.DateFrom = &t
+	}
+	if dateToStr := c.QueryParam("date_to"); dateToStr != "" {
+		t, err := time.Parse(dateFmt, dateToStr)
+		if err != nil {
+			return httperr.BadRequest(c, "date_to は YYYY-MM-DD 形式で指定してください")
+		}
+		// 終了日当日を含めるため翌日 00:00:00 を排他的上限とする
+		t = t.AddDate(0, 0, 1)
+		filter.DateTo = &t
+	}
+
 	userID := c.Get(ctxKeyUserID).(string)
-	items, nextCursor, err := h.repo.List(c.Request().Context(), userID, limit, cursor)
+	items, nextCursor, err := h.repo.List(c.Request().Context(), userID, limit, cursor, filter)
 	if err != nil {
 		return httperr.Internal(c, "エントリ一覧の取得に失敗しました")
 	}
