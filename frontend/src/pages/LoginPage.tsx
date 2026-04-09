@@ -4,8 +4,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-10 shadow-sm ring-1 ring-stone-200">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f7f4ef] px-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-10 shadow-[0_2px_20px_rgba(120,100,80,0.1)] ring-1 ring-stone-200">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-stone-900">
             MonoDiary

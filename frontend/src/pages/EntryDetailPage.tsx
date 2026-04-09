@@ -54,7 +54,7 @@ export function EntryDetailPage() {
         <article className="space-y-6">
           <p className="text-sm text-stone-400">{formatDate(entry.created_at)}</p>
 
-          <section className="rounded-2xl bg-white p-6 ring-1 ring-stone-200">
+          <section className="rounded-2xl bg-white p-6 ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)]">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-stone-400">
               日記
             </h2>
@@ -63,7 +63,7 @@ export function EntryDetailPage() {
             </p>
           </section>
 
-          <section className="rounded-2xl bg-stone-100 p-6">
+          <section className="rounded-2xl bg-[#f0ece4] p-6">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-stone-400">
               原文（LINE メッセージ）
             </h2>

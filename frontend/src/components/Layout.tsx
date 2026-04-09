@@ -17,8 +17,8 @@ export function Layout({ children }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <header className="border-b border-stone-200 bg-white">
+    <div className="min-h-screen bg-[#f7f4ef]">
+      <header className="border-b border-stone-200 bg-[#faf8f5]">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
           <span
             className="cursor-pointer text-lg font-semibold tracking-tight text-stone-800"

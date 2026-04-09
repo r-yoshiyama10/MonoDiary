@@ -82,7 +82,7 @@ export function EntriesPage() {
       {/* 検索フォーム */}
       <form
         onSubmit={handleSearch}
-        className="mb-6 rounded-2xl bg-white p-5 ring-1 ring-stone-200 space-y-4"
+        className="mb-6 rounded-2xl bg-white p-5 ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)] space-y-4"
       >
         {/* フリーワード */}
         <div>
@@ -175,7 +175,7 @@ export function EntriesPage() {
       )}
 
       {!loading && entries.length === 0 && !error && (
-        <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-stone-200">
+        <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)]">
           {isFiltered ? (
             <p className="text-stone-400">条件に一致する日記が見つかりませんでした。</p>
           ) : (
@@ -194,7 +194,7 @@ export function EntriesPage() {
           <li
             key={entry.id}
             onClick={() => navigate(`/entries/${entry.id}`)}
-            className="cursor-pointer rounded-2xl bg-white p-5 shadow-xs ring-1 ring-stone-200 transition hover:ring-stone-400"
+            className="cursor-pointer rounded-2xl bg-white p-5 shadow-[0_2px_12px_rgba(120,100,80,0.07)] ring-1 ring-stone-200 transition hover:ring-stone-300 hover:shadow-[0_4px_16px_rgba(120,100,80,0.12)]"
           >
             <p className="mb-1 text-xs text-stone-400">{formatDate(entry.created_at)}</p>
             <p className="text-sm leading-relaxed text-stone-700">{excerpt(entry.diary_text)}</p>
