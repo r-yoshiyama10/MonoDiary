@@ -30,6 +30,7 @@ export function EntriesPage() {
 
   const [form, setForm] = useState<SearchParams>(EMPTY_SEARCH)
   const [appliedSearch, setAppliedSearch] = useState<SearchParams>(EMPTY_SEARCH)
+  const [searchOpen, setSearchOpen] = useState(false)
   const initialized = useRef(false)
 
   const load = async (nextCursor: string | undefined, search: SearchParams) => {
@@ -68,6 +69,7 @@ export function EntriesPage() {
     setEntries([])
     setCursor(null)
     setHasMore(true)
+    setSearchOpen(false)
     load(undefined, EMPTY_SEARCH)
   }
 
@@ -76,98 +78,126 @@ export function EntriesPage() {
 
   return (
     <Layout>
-      <h2 className="mb-5 text-xl font-semibold text-stone-800">日記一覧</h2>
-
-      {/* 検索フォーム */}
-      <form
-        onSubmit={handleSearch}
-        className="mb-6 rounded-2xl bg-white p-5 ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)] space-y-4"
-      >
-        {/* フリーワード */}
-        <div>
-          <label className="block mb-1 text-xs font-medium text-stone-500">キーワード</label>
-          <input
-            type="text"
-            value={form.q}
-            onChange={(e) => setForm((f) => ({ ...f, q: e.target.value }))}
-            placeholder="日記・原文を検索…"
-            className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 placeholder-stone-300 outline-none focus:border-stone-400 focus:bg-white transition"
-          />
-        </div>
-
-        {/* 日付範囲 */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <label className="block mb-1 text-xs font-medium text-stone-500">開始日</label>
-            <input
-              type="date"
-              value={form.dateFrom}
-              max={form.dateTo || undefined}
-              onChange={(e) => setForm((f) => ({ ...f, dateFrom: e.target.value }))}
-              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-400 focus:bg-white transition"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block mb-1 text-xs font-medium text-stone-500">終了日</label>
-            <input
-              type="date"
-              value={form.dateTo}
-              min={form.dateFrom || undefined}
-              onChange={(e) => setForm((f) => ({ ...f, dateTo: e.target.value }))}
-              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-400 focus:bg-white transition"
-            />
-          </div>
-        </div>
-
-        {/* ソート順 */}
-        <div className="flex items-center gap-3">
-          <label className="text-xs font-medium text-stone-500 shrink-0">並び順</label>
-          <div className="flex rounded-xl border border-stone-200 overflow-hidden text-sm">
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, sort: 'desc' }))}
-              className={`px-4 py-1.5 transition ${
-                form.sort !== 'asc'
-                  ? 'bg-stone-800 text-white'
-                  : 'bg-white text-stone-500 hover:bg-stone-50'
-              }`}
-            >
-              新しい順
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, sort: 'asc' }))}
-              className={`px-4 py-1.5 transition ${
-                form.sort === 'asc'
-                  ? 'bg-stone-800 text-white'
-                  : 'bg-white text-stone-500 hover:bg-stone-50'
-              }`}
-            >
-              古い順
-            </button>
-          </div>
-        </div>
-
-        {/* ボタン */}
-        <div className="flex gap-2 pt-1">
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-xl bg-stone-800 px-5 py-2 text-sm text-white transition hover:bg-stone-700 disabled:opacity-40"
-          >
-            検索
-          </button>
+      {/* ヘッダー行 */}
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-stone-800">日記一覧</h2>
+        <button
+          type="button"
+          onClick={() => setSearchOpen((o) => !o)}
+          className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-1.5 text-sm text-stone-500 shadow-[0_1px_4px_rgba(120,100,80,0.06)] transition hover:bg-stone-50 hover:text-stone-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0">
+            <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
+          </svg>
+          <span>絞り込み</span>
           {isFiltered && (
-            <button
-              type="button"
-              onClick={handleReset}
-              className="rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm text-stone-500 transition hover:bg-stone-50"
-            >
-              リセット
-            </button>
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-stone-700 text-[10px] font-semibold text-white">
+              {[appliedSearch.q, appliedSearch.dateFrom, appliedSearch.dateTo, appliedSearch.sort === 'asc' ? '1' : ''].filter(Boolean).length}
+            </span>
           )}
-        </div>
-      </form>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${searchOpen ? 'rotate-180' : ''}`}
+          >
+            <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      {/* 検索フォーム（アコーディオン） */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${searchOpen ? 'max-h-[500px] opacity-100 mb-6' : 'max-h-0 opacity-0 mb-0'}`}>
+        <form
+          onSubmit={handleSearch}
+          className="rounded-2xl bg-white p-5 ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)] space-y-4"
+        >
+          {/* フリーワード */}
+          <div>
+            <label className="block mb-1 text-xs font-medium text-stone-500">キーワード</label>
+            <input
+              type="text"
+              value={form.q}
+              onChange={(e) => setForm((f) => ({ ...f, q: e.target.value }))}
+              placeholder="日記・原文を検索…"
+              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 placeholder-stone-300 outline-none focus:border-stone-400 focus:bg-white transition"
+            />
+          </div>
+
+          {/* 日付範囲 */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label className="block mb-1 text-xs font-medium text-stone-500">開始日</label>
+              <input
+                type="date"
+                value={form.dateFrom}
+                max={form.dateTo || undefined}
+                onChange={(e) => setForm((f) => ({ ...f, dateFrom: e.target.value }))}
+                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-400 focus:bg-white transition"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block mb-1 text-xs font-medium text-stone-500">終了日</label>
+              <input
+                type="date"
+                value={form.dateTo}
+                min={form.dateFrom || undefined}
+                onChange={(e) => setForm((f) => ({ ...f, dateTo: e.target.value }))}
+                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-400 focus:bg-white transition"
+              />
+            </div>
+          </div>
+
+          {/* ソート順 */}
+          <div className="flex items-center gap-3">
+            <label className="text-xs font-medium text-stone-500 shrink-0">並び順</label>
+            <div className="flex rounded-xl border border-stone-200 overflow-hidden text-sm">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, sort: 'desc' }))}
+                className={`px-4 py-1.5 transition ${
+                  form.sort !== 'asc'
+                    ? 'bg-stone-800 text-white'
+                    : 'bg-white text-stone-500 hover:bg-stone-50'
+                }`}
+              >
+                新しい順
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, sort: 'asc' }))}
+                className={`px-4 py-1.5 transition ${
+                  form.sort === 'asc'
+                    ? 'bg-stone-800 text-white'
+                    : 'bg-white text-stone-500 hover:bg-stone-50'
+                }`}
+              >
+                古い順
+              </button>
+            </div>
+          </div>
+
+          {/* ボタン */}
+          <div className="flex gap-2 pt-1">
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-xl bg-stone-800 px-5 py-2 text-sm text-white transition hover:bg-stone-700 disabled:opacity-40"
+            >
+              検索
+            </button>
+            {isFiltered && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm text-stone-500 transition hover:bg-stone-50"
+              >
+                リセット
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
 
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
