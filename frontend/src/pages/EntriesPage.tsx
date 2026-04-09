@@ -115,13 +115,27 @@ export function EntriesPage() {
           {/* フリーワード */}
           <div>
             <label className="block mb-1 text-xs font-medium text-stone-500">キーワード</label>
-            <input
-              type="text"
-              value={form.q}
-              onChange={(e) => setForm((f) => ({ ...f, q: e.target.value }))}
-              placeholder="日記・原文を検索…"
-              className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 placeholder-stone-300 outline-none focus:border-stone-400 focus:bg-white transition"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={form.q}
+                onChange={(e) => setForm((f) => ({ ...f, q: e.target.value }))}
+                placeholder="日記・原文を検索…"
+                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 pr-8 text-sm text-stone-800 placeholder-stone-300 outline-none focus:border-stone-400 focus:bg-white transition"
+              />
+              {form.q && (
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, q: '' }))}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-300 hover:text-stone-500 transition"
+                  aria-label="クリア"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 日付範囲 */}
