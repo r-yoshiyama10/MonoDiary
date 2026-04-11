@@ -2,10 +2,14 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"monodiary/internal/domain"
 )
+
+// ErrInvalidCursor はページネーションカーソルが不正な形式だったことを示す sentinel error。
+var ErrInvalidCursor = errors.New("invalid cursor")
 
 // DiaryGenerator は詳細設計 8 章のポート。Gemini 失敗時はフォールバック文を返し err は nil。
 type DiaryGenerator interface {
