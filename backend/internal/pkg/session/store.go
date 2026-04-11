@@ -19,12 +19,13 @@ type Store struct {
 	inner *sessions.CookieStore
 }
 
-func NewStore(secret string) *Store {
+func NewStore(secret string, secure bool) *Store {
 	s := sessions.NewCookieStore([]byte(secret))
 	s.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   int(ttl.Seconds()),
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	}
 	return &Store{inner: s}

@@ -41,7 +41,7 @@ func main() {
 	}
 	repo := postgres.NewEntryRepository(db)
 
-	sessionStore := session.NewStore(cfg.SessionSecret)
+	sessionStore := session.NewStore(cfg.SessionSecret, !cfg.EnableDevRoutes)
 	gen := httpadapter.NewDiaryGenerator(cfg)
 	e := httpadapter.NewServer(cfg, sessionStore, gen, repo)
 
