@@ -46,6 +46,7 @@ type lineMessage struct {
 type WebhookHandler struct {
 	channelSecret      string
 	channelAccessToken string
+	frontendOrigin     string
 	repo               usecase.EntryRepository
 	gen                usecase.DiaryGenerator
 }
@@ -53,12 +54,14 @@ type WebhookHandler struct {
 func NewWebhookHandler(
 	channelSecret string,
 	channelAccessToken string,
+	frontendOrigin string,
 	repo usecase.EntryRepository,
 	gen usecase.DiaryGenerator,
 ) *WebhookHandler {
 	return &WebhookHandler{
 		channelSecret:      channelSecret,
 		channelAccessToken: channelAccessToken,
+		frontendOrigin:     frontendOrigin,
 		repo:               repo,
 		gen:                gen,
 	}
@@ -136,14 +139,108 @@ func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) erro
 		return err
 	}
 
-	// LINE に日記テキストを返信
-	if err := h.reply(ctx, event.ReplyToken, diaryText); err != nil {
+	// LINE に日記カード（Flex Message）を返信
+	if err := h.replyFlex(ctx, event.ReplyToken, entry); err != nil {
 		log.Printf("webhook: reply error: %v", err)
 	}
 	return nil
 }
 
-// reply は LINE Reply API を使って replyToken 宛にメッセージを送る。
+// replyFlex は Flex Message で日記カードを LINE に送る。
+// 日記本文が 150 文字を超える場合は冒頭 150 文字に切り詰める。
+func (h *WebhookHandler) replyFlex(ctx context.Context, replyToken string, entry *domain.DiaryEntry) error {
+	const maxRunes = 150
+
+	runes := []rune(entry.DiaryText)
+	bodyText := entry.DiaryText
+	truncated := len(runes) > maxRunes
+	if truncated {
+		bodyText = string(runes[:maxRunes]) + "…"
+	}
+
+	jst := time.FixedZone("JST", 9*60*60)
+	dateStr := entry.CreatedAt.In(jst).Format("2006年01月02日")
+
+	buttonLabel := "Webアプリで見る"
+	if truncated {
+		buttonLabel = "続きをWebアプリで見る"
+	}
+	entryURL := fmt.Sprintf("%s/entries/%s", h.frontendOrigin, entry.ID)
+
+	flexContents := map[string]any{
+		"type": "bubble",
+		"header": map[string]any{
+			"type":            "box",
+			"layout":          "vertical",
+			"backgroundColor": "#5A67D8",
+			"paddingAll":      "16px",
+			"contents": []map[string]any{
+				{
+					"type":   "text",
+					"text":   "📔 今日の日記",
+					"color":  "#FFFFFF",
+					"weight": "bold",
+					"size":   "md",
+				},
+				{
+					"type":   "text",
+					"text":   dateStr,
+					"color":  "#FFFFFFAA",
+					"size":   "xs",
+					"margin": "sm",
+				},
+			},
+		},
+		"body": map[string]any{
+			"type":       "box",
+			"layout":     "vertical",
+			"paddingAll": "16px",
+			"contents": []map[string]any{
+				{
+					"type":  "text",
+					"text":  bodyText,
+					"wrap":  true,
+					"size":  "sm",
+					"color": "#333333",
+				},
+			},
+		},
+		"footer": map[string]any{
+			"type":       "box",
+			"layout":     "vertical",
+			"paddingAll": "12px",
+			"contents": []map[string]any{
+				{
+					"type":  "button",
+					"style": "primary",
+					"color": "#5A67D8",
+					"action": map[string]any{
+						"type":  "uri",
+						"label": buttonLabel,
+						"uri":   entryURL,
+					},
+				},
+			},
+		},
+	}
+
+	payload, err := json.Marshal(map[string]any{
+		"replyToken": replyToken,
+		"messages": []map[string]any{
+			{
+				"type":     "flex",
+				"altText":  "今日の日記が完成しました",
+				"contents": flexContents,
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("marshal flex reply payload: %w", err)
+	}
+	return h.doReply(ctx, payload)
+}
+
+// reply は LINE Reply API を使って replyToken 宛にテキストメッセージを送る。
 func (h *WebhookHandler) reply(ctx context.Context, replyToken, text string) error {
 	payload, err := json.Marshal(map[string]any{
 		"replyToken": replyToken,
@@ -154,7 +251,11 @@ func (h *WebhookHandler) reply(ctx context.Context, replyToken, text string) err
 	if err != nil {
 		return fmt.Errorf("marshal reply payload: %w", err)
 	}
+	return h.doReply(ctx, payload)
+}
 
+// doReply は LINE Reply API に payload を POST する共通処理。
+func (h *WebhookHandler) doReply(ctx context.Context, payload []byte) error {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
