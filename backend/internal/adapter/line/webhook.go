@@ -137,12 +137,15 @@ func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) erro
 
 // reply は LINE Reply API を使って replyToken 宛にメッセージを送る。
 func (h *WebhookHandler) reply(ctx context.Context, replyToken, text string) error {
-	payload, _ := json.Marshal(map[string]any{
+	payload, err := json.Marshal(map[string]any{
 		"replyToken": replyToken,
 		"messages": []map[string]string{
 			{"type": "text", "text": text},
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("marshal reply payload: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(
 		ctx,
