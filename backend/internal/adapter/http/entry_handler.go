@@ -1,6 +1,7 @@
 package httpadapter
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -79,7 +80,7 @@ func (h *entryHandler) create(c echo.Context) error {
 		ID:         entry.ID,
 		SourceText: entry.SourceText,
 		DiaryText:  entry.DiaryText,
-		CreatedAt:  entry.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		CreatedAt:  entry.CreatedAt.UTC().Format(time.RFC3339),
 	})
 }
 
@@ -120,9 +121,15 @@ func (h *entryHandler) list(c echo.Context) error {
 		filter.DateTo = &t
 	}
 
-	userID := c.Get(ctxKeyUserID).(string)
+	userID, ok := c.Get(ctxKeyUserID).(string)
+	if !ok || userID == "" {
+		return httperr.Respond(c, http.StatusUnauthorized, "UNAUTHORIZED", "ログインが必要です", nil)
+	}
 	items, nextCursor, err := h.repo.List(c.Request().Context(), userID, limit, cursor, filter)
 	if err != nil {
+		if errors.Is(err, usecase.ErrInvalidCursor) {
+			return httperr.BadRequest(c, "cursor が不正です")
+		}
 		return httperr.Internal(c, "エントリ一覧の取得に失敗しました")
 	}
 
@@ -145,7 +152,10 @@ func (h *entryHandler) findByID(c echo.Context) error {
 		return httperr.BadRequest(c, "id は必須です")
 	}
 
-	userID := c.Get(ctxKeyUserID).(string)
+	userID, ok := c.Get(ctxKeyUserID).(string)
+	if !ok || userID == "" {
+		return httperr.Respond(c, http.StatusUnauthorized, "UNAUTHORIZED", "ログインが必要です", nil)
+	}
 	entry, err := h.repo.FindByID(c.Request().Context(), userID, id)
 	if err != nil {
 		return httperr.Internal(c, "エントリの取得に失敗しました")
