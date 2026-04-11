@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -66,11 +67,13 @@ func (g *Generator) GenerateDiaryText(ctx context.Context, source string) (strin
 	if err == nil && strings.TrimSpace(text) != "" {
 		return stripMarkdownish(text), nil
 	}
+	log.Printf("gemini: attempt 1 failed: err=%v text=%q", err, text)
 	time.Sleep(time.Second)
 	text, err2 := g.generateOnce(ctx, source)
 	if err2 == nil && strings.TrimSpace(text) != "" {
 		return stripMarkdownish(text), nil
 	}
+	log.Printf("gemini: attempt 2 failed: err=%v text=%q", err2, text)
 	return fallbackPrefix + source, nil
 }
 
