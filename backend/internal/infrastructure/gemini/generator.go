@@ -68,7 +68,14 @@ func (g *Generator) GenerateDiaryText(ctx context.Context, source string) (strin
 		return stripMarkdownish(text), nil
 	}
 	log.Printf("gemini: attempt 1 failed: err=%v text=%q", err, text)
-	time.Sleep(time.Second)
+
+	// コンテキストがキャンセル済みの場合はすぐにフォールバック
+	select {
+	case <-ctx.Done():
+		return fallbackPrefix + source, nil
+	case <-time.After(time.Second):
+	}
+
 	text, err2 := g.generateOnce(ctx, source)
 	if err2 == nil && strings.TrimSpace(text) != "" {
 		return stripMarkdownish(text), nil
@@ -78,7 +85,7 @@ func (g *Generator) GenerateDiaryText(ctx context.Context, source string) (strin
 }
 
 func (g *Generator) generateOnce(ctx context.Context, source string) (string, error) {
-	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", g.baseURL, g.model, g.apiKey)
+	url := fmt.Sprintf("%s/models/%s:generateContent", g.baseURL, g.model)
 	body := generateRequest{
 		SystemInstruction: &contentPayload{
 			Parts: []part{{Text: systemInstruction}},
@@ -100,6 +107,7 @@ func (g *Generator) generateOnce(ctx context.Context, source string) (string, er
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-goog-api-key", g.apiKey)
 
 	resp, err := g.client.Do(req)
 	if err != nil {
