@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -138,8 +139,10 @@ func (r *EntryRepository) List(ctx context.Context, userID string, limit int, cu
 		Where("line_user_id = ?", userID)
 
 	if filter.Query != "" {
-		like := "%" + filter.Query + "%"
-		q = q.Where("source_text ILIKE ? OR diary_text ILIKE ?", like, like)
+		// % と _ はILIKEのワイルドカードなのでエスケープする（! をエスケープ文字として使用）
+		escaped := strings.NewReplacer("!", "!!", "%", "!%", "_", "!_").Replace(filter.Query)
+		like := "%" + escaped + "%"
+		q = q.Where("(source_text ILIKE ? ESCAPE '!' OR diary_text ILIKE ? ESCAPE '!')", like, like)
 	}
 	if filter.DateFrom != nil {
 		q = q.Where("created_at >= ?", filter.DateFrom)
@@ -158,7 +161,7 @@ func (r *EntryRepository) List(ctx context.Context, userID string, limit int, cu
 	if cursor != "" {
 		p, err := decodeCursor(cursor)
 		if err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("%w: %w", usecase.ErrInvalidCursor, err)
 		}
 		if asc {
 			q = q.Where("created_at > ? OR (created_at = ? AND id > ?)", p.CreatedAt, p.CreatedAt, p.ID)
