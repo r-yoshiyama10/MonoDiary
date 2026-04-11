@@ -27,6 +27,9 @@ const (
 	stateCookieTTL   = 10 * time.Minute
 )
 
+// lineHTTPClient は LINE API 呼び出し専用クライアント。DefaultClient はタイムアウトが無いため使わない。
+var lineHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
 type authHandler struct {
 	cfg          config.Config
 	sessionStore *session.Store
@@ -126,7 +129,7 @@ func exchangeToken(ctx context.Context, cfg config.Config, code string) (string,
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := lineHTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -150,7 +153,7 @@ func fetchLineUserID(ctx context.Context, accessToken string) (string, error) {
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := lineHTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}
