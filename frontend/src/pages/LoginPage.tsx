@@ -1,29 +1,99 @@
+import type { ReactNode } from 'react'
+
 export function LoginPage() {
   const handleLogin = () => {
     window.location.href = '/auth/line'
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f7f4ef] px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-10 shadow-[0_2px_20px_rgba(120,100,80,0.1)] ring-1 ring-stone-200">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-stone-900">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f7f4ef] px-4 py-12">
+      <div className="w-full max-w-md space-y-6">
+
+        {/* ヘッダー */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-stone-900">
             MonoDiary
           </h1>
-          <p className="mt-2 text-sm text-stone-500">
+          <p className="mt-2 text-base text-stone-500">
             LINE で送った言葉が、日記になる。
           </p>
         </div>
 
-        <button
-          onClick={handleLogin}
-          className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#06C755] px-4 py-3 font-semibold text-white transition hover:bg-[#05b34c] active:scale-95"
-        >
-          <LineIcon />
-          LINE でログイン
-        </button>
+        {/* 使い方カード */}
+        <div className="rounded-2xl bg-white p-8 shadow-[0_2px_20px_rgba(120,100,80,0.1)] ring-1 ring-stone-200">
+          <h2 className="mb-5 text-center text-sm font-semibold uppercase tracking-widest text-stone-400">
+            はじめかた
+          </h2>
+
+          <ol className="mb-7 space-y-4">
+            <Step number={1} title="LINE を友だち追加">
+              下の QR コードから MonoDiary を友だち追加します
+            </Step>
+            <Step number={2} title="日記を LINE に送る">
+              その日の出来事や気持ちをトークで送るだけ
+            </Step>
+            <Step number={3} title="ここで振り返る">
+              ログインして、日記をまとめて読み返せます
+            </Step>
+          </ol>
+
+          {/* QRコード */}
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src="https://qr-official.line.me/gs/M_532aamdn_BW.png?oat_content=qr"
+              alt="MonoDiary LINE QR コード"
+              className="h-36 w-36 rounded-xl ring-1 ring-stone-200"
+            />
+            <a
+              href="https://lin.ee/Z2U3RJb"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#06C755] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#05b34c] active:scale-95"
+            >
+              <LineIcon />
+              友だち追加
+            </a>
+          </div>
+        </div>
+
+        {/* ログインカード */}
+        <div className="rounded-2xl bg-white p-6 shadow-[0_2px_20px_rgba(120,100,80,0.1)] ring-1 ring-stone-200">
+          <p className="mb-4 text-center text-sm text-stone-500">
+            すでに友だち追加済みの方はこちら
+          </p>
+          <button
+            onClick={handleLogin}
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#06C755] px-4 py-3 font-semibold text-white transition hover:bg-[#05b34c] active:scale-95"
+          >
+            <LineIcon />
+            LINE でログイン
+          </button>
+        </div>
+
       </div>
     </div>
+  )
+}
+
+function Step({
+  number,
+  title,
+  children,
+}: {
+  number: number
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <li className="flex items-start gap-4">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#06C755] text-xs font-bold text-white">
+        {number}
+      </span>
+      <div>
+        <p className="font-semibold text-stone-800">{title}</p>
+        <p className="mt-0.5 text-sm text-stone-500">{children}</p>
+      </div>
+    </li>
   )
 }
 
