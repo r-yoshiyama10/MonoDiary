@@ -11,7 +11,12 @@ import (
 // ErrInvalidCursor はページネーションカーソルが不正な形式だったことを示す sentinel error。
 var ErrInvalidCursor = errors.New("invalid cursor")
 
-// DiaryGenerator は詳細設計 8 章のポート。Gemini 失敗時はフォールバック文を返し err は nil。
+// ErrGenerationFailed は AI による日記生成がリトライ後も失敗したことを示す sentinel error。
+// この場合はフォールバックテキストを DB に保存せず、呼び出し側でエラーとして扱う。
+var ErrGenerationFailed = errors.New("diary generation failed")
+
+// DiaryGenerator は詳細設計 8 章のポート。
+// AI 生成が失敗した場合は ErrGenerationFailed を返す（フォールバック文は保存しない）。
 type DiaryGenerator interface {
 	GenerateDiaryText(ctx context.Context, source string) (diaryText string, err error)
 }

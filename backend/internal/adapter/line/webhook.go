@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -113,6 +114,13 @@ func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) erro
 	// Gemini で日記テキスト生成
 	diaryText, err := h.gen.GenerateDiaryText(ctx, event.Message.Text)
 	if err != nil {
+		if errors.Is(err, usecase.ErrGenerationFailed) {
+			log.Printf("webhook: AI generation failed, skipping save: messageId=%s", event.Message.ID)
+			if replyErr := h.reply(ctx, event.ReplyToken, "AIによる日記の自動整形に失敗しました。時間をおいて再度お試しください。"); replyErr != nil {
+				log.Printf("webhook: reply error: %v", replyErr)
+			}
+			return nil
+		}
 		return err
 	}
 

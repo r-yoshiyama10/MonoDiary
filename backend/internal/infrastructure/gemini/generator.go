@@ -14,8 +14,7 @@ import (
 	"monodiary/internal/usecase"
 )
 
-const (
-	systemInstruction = `あなたは日本語の日記執筆アシスタントです。
+const systemInstruction = `あなたは日本語の日記執筆アシスタントです。
 ユーザーが LINE で送った断片的なメモや会話調のメッセージを、一人称の日記として読める文章に整えてください。
 
 【文体・トーンについて】
@@ -29,9 +28,6 @@ const (
 - 内容の捏造・補完はしないでください（与えられた情報のみ使用）
 - 日付・見出しは付けず、本文のみ出力してください
 - 過度に丁寧・硬い文体に変換しないでください`
-
-	fallbackPrefix = "[自動整形に失敗したため原文を表示しています]\n"
-)
 
 var _ usecase.DiaryGenerator = (*Generator)(nil)
 
@@ -54,11 +50,6 @@ func NewGenerator(apiKey, model string) *Generator {
 	}
 }
 
-// UsedFallback は詳細設計 6.4 のフォールバック本文かどうかを返す。
-func UsedFallback(diaryText string) bool {
-	return strings.HasPrefix(diaryText, fallbackPrefix)
-}
-
 func (g *Generator) GenerateDiaryText(ctx context.Context, source string) (string, error) {
 	if strings.TrimSpace(source) == "" {
 		return "", fmt.Errorf("empty source")
@@ -69,10 +60,10 @@ func (g *Generator) GenerateDiaryText(ctx context.Context, source string) (strin
 	}
 	log.Printf("gemini: attempt 1 failed: err=%v text=%q", err, text)
 
-	// コンテキストがキャンセル済みの場合はすぐにフォールバック
+	// コンテキストがキャンセル済みの場合はすぐに失敗
 	select {
 	case <-ctx.Done():
-		return fallbackPrefix + source, nil
+		return "", usecase.ErrGenerationFailed
 	case <-time.After(time.Second):
 	}
 
@@ -81,7 +72,7 @@ func (g *Generator) GenerateDiaryText(ctx context.Context, source string) (strin
 		return stripMarkdownish(text), nil
 	}
 	log.Printf("gemini: attempt 2 failed: err=%v text=%q", err2, text)
-	return fallbackPrefix + source, nil
+	return "", usecase.ErrGenerationFailed
 }
 
 func (g *Generator) generateOnce(ctx context.Context, source string) (string, error) {

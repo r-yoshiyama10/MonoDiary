@@ -1,11 +1,11 @@
 package httpadapter
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 
-	"monodiary/internal/infrastructure/gemini"
 	"monodiary/internal/pkg/httperr"
 	"monodiary/internal/usecase"
 )
@@ -31,12 +31,19 @@ func RegisterDevRoutes(e *echo.Echo, gen usecase.DiaryGenerator) {
 		}
 		diary, err := gen.GenerateDiaryText(c.Request().Context(), req.SourceText)
 		if err != nil {
+			if errors.Is(err, usecase.ErrGenerationFailed) {
+				return c.JSON(http.StatusOK, DevPreviewResponse{
+					SourceText:   req.SourceText,
+					DiaryText:    "",
+					UsedFallback: true,
+				})
+			}
 			return httperr.Internal(c, "日記テキストの生成に失敗しました")
 		}
 		return c.JSON(http.StatusOK, DevPreviewResponse{
 			SourceText:   req.SourceText,
 			DiaryText:    diary,
-			UsedFallback: gemini.UsedFallback(diary),
+			UsedFallback: false,
 		})
 	})
 }
