@@ -15,9 +15,8 @@ import (
 const dateFmt = "2006-01-02"
 
 type entryHandler struct {
-	repo   usecase.EntryRepository
-	gen    usecase.DiaryGenerator
-	userID string
+	repo usecase.EntryRepository
+	gen  usecase.DiaryGenerator
 }
 
 type entryItem struct {
@@ -63,8 +62,12 @@ func (h *entryHandler) create(c echo.Context) error {
 		return httperr.Internal(c, "日記テキストの生成に失敗しました")
 	}
 
+	userID, _ := c.Get(ctxKeyUserID).(string)
+	if userID == "" {
+		userID = "dev_user"
+	}
 	entry := &domain.DiaryEntry{
-		LineUserID: h.userID,
+		LineUserID: userID,
 		SourceText: req.SourceText,
 		DiaryText:  diaryText,
 	}

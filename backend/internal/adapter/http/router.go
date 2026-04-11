@@ -35,7 +35,7 @@ func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.Diary
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	wh := lineadapter.NewWebhookHandler(cfg.LineChannelSecret, cfg.LineChannelAccessToken, cfg.AllowedLineUserID, repo, gen)
+	wh := lineadapter.NewWebhookHandler(cfg.LineChannelSecret, cfg.LineChannelAccessToken, repo, gen)
 	e.POST("/webhooks/line", wh.Handle)
 
 	// 認証ルート（セッション不要）
@@ -45,7 +45,7 @@ func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.Diary
 	e.POST("/auth/logout", authH.logout)
 
 	// API ルート（セッション必須）
-	h := &entryHandler{repo: repo, gen: gen, userID: cfg.AllowedLineUserID}
+	h := &entryHandler{repo: repo, gen: gen}
 	api := e.Group("/api")
 	api.Use(requireAuth(sessionStore))
 	api.GET("/entries", h.list)

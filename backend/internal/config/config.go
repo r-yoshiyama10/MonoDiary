@@ -14,7 +14,6 @@ type Config struct {
 	DatabaseURL        string
 	LineChannelSecret      string
 	LineChannelAccessToken string
-	AllowedLineUserID      string
 	// LINE Login
 	LineLoginChannelID     string
 	LineLoginChannelSecret string
@@ -45,7 +44,6 @@ func Load() (Config, error) {
 		DatabaseURL:       dbURL,
 		LineChannelSecret:      os.Getenv("LINE_CHANNEL_SECRET"),
 		LineChannelAccessToken: os.Getenv("LINE_CHANNEL_ACCESS_TOKEN"),
-		AllowedLineUserID:      os.Getenv("MONODIARY_ALLOWED_LINE_USER_ID"),
 		LineLoginChannelID:     os.Getenv("LINE_LOGIN_CHANNEL_ID"),
 		LineLoginChannelSecret: os.Getenv("LINE_LOGIN_CHANNEL_SECRET"),
 		LineLoginCallbackURL:   os.Getenv("LINE_LOGIN_CALLBACK_URL"),

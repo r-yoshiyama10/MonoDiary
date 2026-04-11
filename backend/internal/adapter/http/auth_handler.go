@@ -83,10 +83,6 @@ func (h *authHandler) callback(c echo.Context) error {
 		return httperr.Internal(c, "ユーザー情報の取得に失敗しました")
 	}
 
-	if lineUserID != h.cfg.AllowedLineUserID {
-		return httperr.Respond(c, http.StatusForbidden, "FORBIDDEN", "このアカウントはアクセスできません", nil)
-	}
-
 	if err := h.sessionStore.Create(c.Response(), c.Request(), lineUserID); err != nil {
 		return httperr.Internal(c, "セッションの作成に失敗しました")
 	}

@@ -43,24 +43,21 @@ type lineMessage struct {
 }
 
 type WebhookHandler struct {
-	channelSecret       string
-	channelAccessToken  string
-	allowedLineUserID   string
-	repo                usecase.EntryRepository
-	gen                 usecase.DiaryGenerator
+	channelSecret      string
+	channelAccessToken string
+	repo               usecase.EntryRepository
+	gen                usecase.DiaryGenerator
 }
 
 func NewWebhookHandler(
 	channelSecret string,
 	channelAccessToken string,
-	allowedLineUserID string,
 	repo usecase.EntryRepository,
 	gen usecase.DiaryGenerator,
 ) *WebhookHandler {
 	return &WebhookHandler{
 		channelSecret:      channelSecret,
 		channelAccessToken: channelAccessToken,
-		allowedLineUserID:  allowedLineUserID,
 		repo:               repo,
 		gen:                gen,
 	}
@@ -100,12 +97,6 @@ func (h *WebhookHandler) Handle(c echo.Context) error {
 func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) error {
 	// テキストメッセージ以外はスキップ
 	if event.Type != "message" || event.Message.Type != "text" {
-		return nil
-	}
-
-	// 本人判定（詳細設計 5.1）
-	if event.Source.UserID != h.allowedLineUserID {
-		log.Printf("webhook: unauthorized userId=%s, skipping", event.Source.UserID)
 		return nil
 	}
 
