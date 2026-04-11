@@ -146,6 +146,28 @@ func (h *entryHandler) list(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+func (h *entryHandler) delete(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return httperr.BadRequest(c, "id は必須です")
+	}
+
+	userID, ok := c.Get(ctxKeyUserID).(string)
+	if !ok || userID == "" {
+		return httperr.Respond(c, http.StatusUnauthorized, "UNAUTHORIZED", "ログインが必要です", nil)
+	}
+
+	found, err := h.repo.Delete(c.Request().Context(), userID, id)
+	if err != nil {
+		return httperr.Internal(c, "エントリの削除に失敗しました")
+	}
+	if !found {
+		return httperr.NotFound(c, "エントリが見つかりません")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 func (h *entryHandler) findByID(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {

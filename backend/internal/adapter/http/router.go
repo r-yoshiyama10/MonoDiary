@@ -26,7 +26,7 @@ func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.Diary
 	}
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{corsOrigin},
-		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodOptions},
 		AllowHeaders:     []string{"Content-Type"},
 		AllowCredentials: true,
 	}))
@@ -50,6 +50,7 @@ func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.Diary
 	api.Use(requireAuth(sessionStore))
 	api.GET("/entries", h.list)
 	api.GET("/entries/:id", h.findByID)
+	api.DELETE("/entries/:id", h.delete)
 
 	if cfg.EnableDevRoutes {
 		// dev専用ルート（認証不要）

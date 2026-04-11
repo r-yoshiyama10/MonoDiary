@@ -45,6 +45,9 @@ export const api = {
   getEntry: (id: string): Promise<DiaryEntry> =>
     request<DiaryEntry>(`/api/entries/${id}`),
 
+  deleteEntry: (id: string): Promise<void> =>
+    request<void>(`/api/entries/${id}`, { method: 'DELETE' }),
+
   logout: (): Promise<void> =>
     request<void>('/auth/logout', { method: 'POST' }),
 }

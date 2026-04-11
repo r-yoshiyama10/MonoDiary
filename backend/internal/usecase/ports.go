@@ -33,6 +33,7 @@ type ListFilter struct {
 type EntryRepository interface {
 	Create(ctx context.Context, entry *domain.DiaryEntry) error
 	FindByID(ctx context.Context, userID, id string) (*domain.DiaryEntry, error)
+	Delete(ctx context.Context, userID, id string) (found bool, err error)
 	List(ctx context.Context, userID string, limit int, cursor string, filter ListFilter) (items []*domain.DiaryEntry, nextCursor string, err error)
 	ExistsByLineMessageID(ctx context.Context, messageID string) (bool, error)
 }

@@ -93,6 +93,16 @@ func (r *EntryRepository) FindByID(ctx context.Context, userID, id string) (*dom
 	return toDomain(m), nil
 }
 
+func (r *EntryRepository) Delete(ctx context.Context, userID, id string) (bool, error) {
+	result := r.db.WithContext(ctx).
+		Where("id = ? AND line_user_id = ?", id, userID).
+		Delete(&entryModel{})
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
 func (r *EntryRepository) ExistsByLineMessageID(ctx context.Context, messageID string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
