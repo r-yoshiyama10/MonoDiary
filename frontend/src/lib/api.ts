@@ -2,6 +2,17 @@ import type { DiaryEntry, EntriesResponse } from '../types/entry'
 
 const BASE = ''
 
+/** API が 4xx/5xx を返したときに投げる（401 は従来どおり {@link Error} message `UNAUTHORIZED`）。 */
+export class HttpError extends Error {
+  readonly status: number
+
+  constructor(status: number, message?: string) {
+    super(message ?? `HTTP ${status}`)
+    this.name = 'HttpError'
+    this.status = status
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     credentials: 'include',
@@ -14,7 +25,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`)
+    throw new HttpError(res.status)
   }
 
   if (res.status === 204 || res.headers.get('content-length') === '0') {
