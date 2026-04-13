@@ -3,7 +3,7 @@ CREATE TABLE diary_entries (
     line_user_id    VARCHAR(255) NOT NULL,
     line_message_id VARCHAR(255),
     source_text     TEXT NOT NULL,
-    diary_text      TEXT NOT NULL,
+    ai_comment      TEXT NOT NULL DEFAULT '',
     created_at      TIMESTAMPTZ NOT NULL,
     updated_at      TIMESTAMPTZ NOT NULL,
     CONSTRAINT uq_diary_entries_line_message_id UNIQUE (line_message_id)
