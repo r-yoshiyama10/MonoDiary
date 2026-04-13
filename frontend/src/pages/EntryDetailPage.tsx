@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { api } from '../lib/api'
+import { api, HttpError } from '../lib/api'
 import { Layout } from '../components/Layout'
 import type { DiaryEntry } from '../types/entry'
 
@@ -28,7 +28,13 @@ export function EntryDetailPage() {
     api
       .getEntry(id)
       .then(setEntry)
-      .catch(() => setError('エントリの取得に失敗しました。'))
+      .catch((e: unknown) => {
+        if (e instanceof HttpError && e.status === 404) {
+          setError('この日記は見つかりませんでした。一覧から選び直してください。')
+          return
+        }
+        setError('エントリの取得に失敗しました。通信環境を確認して、しばらくしてから再度お試しください。')
+      })
       .finally(() => setLoading(false))
   }, [id])
 
@@ -118,25 +124,28 @@ export function EntryDetailPage() {
             <div className="h-px flex-1 bg-stone-200" />
           </div>
 
-          {/* 日記本文 */}
+          {/* 日記本文（原文） */}
           <section className="rounded-2xl bg-white p-7 ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)]">
             <h2 className="mb-5 text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-300">
               diary
             </h2>
             <p className="whitespace-pre-wrap text-[1.05rem] leading-[2] tracking-wide text-stone-800">
-              {entry.diary_text}
-            </p>
-          </section>
-
-          {/* 原文 */}
-          <section className="rounded-2xl bg-[#f0ece4] p-7">
-            <h2 className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400">
-              original · LINE
-            </h2>
-            <p className="whitespace-pre-wrap text-sm leading-[1.9] text-stone-500">
               {entry.source_text}
             </p>
           </section>
+
+          {/* AI コメント */}
+          {entry.ai_comment && (
+            <section className="rounded-2xl bg-[#eef0f8] p-6 ring-1 ring-indigo-100">
+              <h2 className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
+                <span>💬</span>
+                <span>AI comment</span>
+              </h2>
+              <p className="whitespace-pre-wrap text-sm leading-[1.9] text-indigo-700">
+                {entry.ai_comment}
+              </p>
+            </section>
+          )}
         </article>
       )}
     </Layout>
