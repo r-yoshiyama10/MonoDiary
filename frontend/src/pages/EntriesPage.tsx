@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { SearchParams } from '../lib/api'
 import { Layout } from '../components/Layout'
@@ -21,7 +21,6 @@ function excerpt(text: string, len = 80) {
 const EMPTY_SEARCH: SearchParams = { q: '', dateFrom: '', dateTo: '', sort: 'desc' }
 
 export function EntriesPage() {
-  const navigate = useNavigate()
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
@@ -236,23 +235,24 @@ export function EntriesPage() {
         {entries.map((entry) => {
           const { year, monthDay, weekday } = formatDateParts(entry.created_at)
           return (
-            <li
-              key={entry.id}
-              onClick={() => navigate(`/entries/${entry.id}`)}
-              className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(120,100,80,0.07)] ring-1 ring-stone-200 transition hover:ring-stone-300 hover:shadow-[0_4px_16px_rgba(120,100,80,0.12)]"
-            >
-              <div className="flex items-stretch">
-                {/* 日付カラム */}
-                <div className="flex min-w-[84px] flex-col items-center justify-center gap-0.5 bg-[#f7f4ef] px-4 py-5 border-r border-stone-100">
-                  <span className="text-[10px] text-stone-400">{year}</span>
-                  <span className="text-sm font-semibold text-stone-700 leading-snug">{monthDay}</span>
-                  <span className="text-[10px] text-stone-400">{weekday}</span>
+            <li key={entry.id}>
+              <Link
+                to={`/entries/${entry.id}`}
+                className="block overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(120,100,80,0.07)] ring-1 ring-stone-200 transition hover:ring-stone-300 hover:shadow-[0_4px_16px_rgba(120,100,80,0.12)] outline-none focus-visible:ring-2 focus-visible:ring-stone-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f4ef]"
+              >
+                <div className="flex items-stretch">
+                  {/* 日付カラム */}
+                  <div className="flex min-w-[84px] flex-col items-center justify-center gap-0.5 bg-[#f7f4ef] px-4 py-5 border-r border-stone-100">
+                    <span className="text-[10px] text-stone-400">{year}</span>
+                    <span className="text-sm font-semibold text-stone-700 leading-snug">{monthDay}</span>
+                    <span className="text-[10px] text-stone-400">{weekday}</span>
+                  </div>
+                  {/* 本文カラム */}
+                  <div className="flex flex-1 items-center px-5 py-5">
+                    <p className="text-sm leading-relaxed text-stone-600">{excerpt(entry.source_text)}</p>
+                  </div>
                 </div>
-                {/* 本文カラム */}
-                <div className="flex flex-1 items-center px-5 py-5">
-                  <p className="text-sm leading-relaxed text-stone-600">{excerpt(entry.diary_text)}</p>
-                </div>
-              </div>
+              </Link>
             </li>
           )
         })}
