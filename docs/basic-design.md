@@ -5,8 +5,8 @@
 | 文書名 | MonoDiary 基本設計書 |
 | ファイル | `docs/basic-design.md` |
 | プロジェクト名 | MonoDiary |
-| 版 | 0.4 |
-| 最終更新日 | 2026-04-04 |
+| 版 | 0.5 |
+| 最終更新日 | 2026-04-13 |
 | 参照 | [`docs/requirements.md`](requirements.md)（要件定義書 v0.4） |
 
 ---
@@ -125,7 +125,7 @@
 ### 4.1 LINE から日記が1件追加されるまで
 
 ```mermaid
-sequenceDiagram
+  sequenceDiagram
   participant U as 利用者
   participant LINE as LINE Platform
   participant API as バックエンド
@@ -136,9 +136,9 @@ sequenceDiagram
   LINE->>API: POST Webhook
   API->>API: 署名検証 X-Line-Signature
   alt 送信者 userId が許可と一致
-    API->>G: 原文を渡し日記文体を生成依頼
-    G-->>API: 日記本文
-    API->>D: エントリ保存
+    API->>G: 原文を渡し一言コメント生成依頼
+    G-->>API: AI コメント（1〜2文）
+    API->>D: エントリ保存（原文 + AI コメント）
     API-->>LINE: 200 OK
   else 不一致または非テキスト
     API-->>LINE: 200 OK（処理スキップ）
@@ -179,7 +179,7 @@ sequenceDiagram
 
 | エンティティ | 説明 |
 |--------------|------|
-| **DiaryEntry（日記エントリ）** | 1 回の LINE テキストに対応。原文、日記文体本文、時刻、LINE 側メッセージ ID（重複対策用）等を持つ |
+| **DiaryEntry（日記エントリ）** | 1 回の LINE テキストに対応。原文（そのまま保存）、AI コメント（LLM 生成の一言）、時刻、LINE 側メッセージ ID（重複対策用）等を持つ |
 
 単一利用者のため、**ユーザー用テーブルは必須ではない**（`line_user_id` をエントリに持つ、または環境変数のみで固定）。
 
@@ -192,8 +192,8 @@ sequenceDiagram
 | `id` | UUID または BIGSERIAL | 主キー |
 | `line_user_id` | VARCHAR | 送信者（本人） |
 | `line_message_id` | VARCHAR, UNIQUE (NULL 可) | 重複防止。取得できない場合は NULL |
-| `source_text` | TEXT | 原文 |
-| `diary_text` | TEXT | 日記文体（LLM 出力） |
+| `source_text` | TEXT | 原文（LINEで送ったテキストをそのまま保存） |
+| `ai_comment` | TEXT | AI コメント（LLM が生成した 1〜2 文の一言） |
 | `created_at` | TIMESTAMPTZ | 受信または保存基準時刻 |
 | `updated_at` | TIMESTAMPTZ | 任意 |
 
@@ -248,8 +248,8 @@ internal/
 | 画面 | 内容 |
 |------|------|
 | `/login` | 専用ログイン画面。「LINE でログイン」→ バックエンドの `/auth/line` へ |
-| `/` または `/entries` | 認証必須。日記エントリ一覧 |
-| `/entries/:id` | 認証必須。原文と日記本文の表示 |
+| `/` または `/entries` | 認証必須。日記エントリ一覧（原文プレビューのみ。AI コメントは非表示） |
+| `/entries/:id` | 認証必須。原文（日記）と AI コメントの表示 |
 
 未認証で保護ルートに入った場合は `/login` へリダイレクト。
 
@@ -298,7 +298,7 @@ internal/
 ## 12. 詳細設計・実装に委ねる事項
 
 - OpenAPI 3.0 等による **API 詳細仕様**  
-- **プロンプト**全文とモデル名、トークン上限、失敗時のフォールバック（原文のみ保存等）  
+- **プロンプト**全文とモデル名、トークン上限、失敗時のフォールバック（コメントなし／空文字で保存等）  
 - **セッション実装**（DB / Redis / 署名 Cookie）と有効期限  
 - **マイグレーション**ツールの選定と運用  
 - **E2E テスト**とシードデータ  
@@ -313,3 +313,4 @@ internal/
 | 0.2 | 2026-04-03 | 論理構成図の再構成（MonoDiary 境界・経路表の追加）。バックエンドをクリーンアーキテクチャ前提で整理しセクション 7 を整合 |
 | 0.3 | 2026-04-03 | §2 を短縮。全体構成・バックエンド層を ASCII 図に統一（Mermaid・長文の原則説明・コンポーネント表を整理） |
 | 0.4 | 2026-04-04 | 永続化を PostgreSQL のみに統一（要件 v0.4 に整合）。Sheets・フェーズ A/B を削除 |
+| 0.5 | 2026-04-13 | Gemini の役割を「日記整形」から「一言コメント生成」へ変更。`diary_text` を廃止し `ai_comment` を追加。フロー・データ設計・UI 要件を整合 |
