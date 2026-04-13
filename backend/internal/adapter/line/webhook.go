@@ -114,12 +114,12 @@ func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) erro
 		return nil
 	}
 
-	// Gemini で日記テキスト生成
-	diaryText, err := h.gen.GenerateDiaryText(ctx, event.Message.Text)
+	// Gemini で AI コメント生成
+	comment, err := h.gen.GenerateComment(ctx, event.Message.Text)
 	if err != nil {
 		if errors.Is(err, usecase.ErrGenerationFailed) {
-			log.Printf("webhook: AI generation failed, skipping save: messageId=%s", event.Message.ID)
-			if replyErr := h.reply(ctx, event.ReplyToken, "AIによる日記の自動整形に失敗しました。時間をおいて再度お試しください。"); replyErr != nil {
+			log.Printf("webhook: AI comment generation failed, skipping save: messageId=%s", event.Message.ID)
+			if replyErr := h.reply(ctx, event.ReplyToken, "AIコメントの生成に失敗したため、日記を保存できませんでした。時間をおいて再度お試しください。"); replyErr != nil {
 				log.Printf("webhook: reply error: %v", replyErr)
 			}
 			return nil
@@ -133,7 +133,7 @@ func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) erro
 		LineUserID:    event.Source.UserID,
 		LineMessageID: &msgID,
 		SourceText:    event.Message.Text,
-		DiaryText:     diaryText,
+		AIComment:     comment,
 	}
 	if err := h.repo.Create(ctx, entry); err != nil {
 		return err
@@ -146,16 +146,16 @@ func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) erro
 	return nil
 }
 
-// replyFlex は Flex Message で日記カードを LINE に送る。
-// 日記本文が 150 文字を超える場合は冒頭 150 文字に切り詰める。
+// replyFlex は Flex Message で日記カード（原文 + AI コメント）を LINE に送る。
+// 原文が 100 文字を超える場合は冒頭 100 文字に切り詰める。
 func (h *WebhookHandler) replyFlex(ctx context.Context, replyToken string, entry *domain.DiaryEntry) error {
-	const maxRunes = 150
+	const maxSourceRunes = 100
 
-	runes := []rune(entry.DiaryText)
-	bodyText := entry.DiaryText
-	truncated := len(runes) > maxRunes
+	sourceRunes := []rune(entry.SourceText)
+	sourceText := entry.SourceText
+	truncated := len(sourceRunes) > maxSourceRunes
 	if truncated {
-		bodyText = string(runes[:maxRunes]) + "…"
+		sourceText = string(sourceRunes[:maxSourceRunes]) + "…"
 	}
 
 	jst := time.FixedZone("JST", 9*60*60)
@@ -195,13 +195,33 @@ func (h *WebhookHandler) replyFlex(ctx context.Context, replyToken string, entry
 			"type":       "box",
 			"layout":     "vertical",
 			"paddingAll": "16px",
+			"spacing":    "md",
 			"contents": []map[string]any{
 				{
 					"type":  "text",
-					"text":  bodyText,
+					"text":  sourceText,
 					"wrap":  true,
 					"size":  "sm",
 					"color": "#333333",
+				},
+				{
+					"type":    "separator",
+					"margin":  "md",
+					"color":   "#E5E0D8",
+				},
+				{
+					"type":   "text",
+					"text":   "💬 AI より",
+					"size":   "xs",
+					"color":  "#8B7E74",
+					"weight": "bold",
+				},
+				{
+					"type":  "text",
+					"text":  entry.AIComment,
+					"wrap":  true,
+					"size":  "sm",
+					"color": "#5C504A",
 				},
 			},
 		},
@@ -229,7 +249,7 @@ func (h *WebhookHandler) replyFlex(ctx context.Context, replyToken string, entry
 		"messages": []map[string]any{
 			{
 				"type":     "flex",
-				"altText":  "今日の日記が完成しました",
+				"altText":  "日記を保存しました",
 				"contents": flexContents,
 			},
 		},
