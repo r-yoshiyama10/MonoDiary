@@ -2,7 +2,7 @@ export interface DiaryEntry {
   id: string
   line_user_id: string
   source_text: string
-  diary_text: string
+  ai_comment: string
   created_at: string
   updated_at: string
 }
