@@ -33,7 +33,7 @@ type entryModel struct {
 	LineUserID     string    `gorm:"column:line_user_id"`
 	LineMessageID  *string   `gorm:"column:line_message_id"`
 	SourceText     string    `gorm:"column:source_text"`
-	DiaryText      string    `gorm:"column:diary_text"`
+	AIComment      string    `gorm:"column:ai_comment"`
 	EntryCreatedAt time.Time `gorm:"column:created_at"`
 	EntryUpdatedAt time.Time `gorm:"column:updated_at"`
 }
@@ -46,7 +46,7 @@ func toModel(e *domain.DiaryEntry) entryModel {
 		LineUserID:     e.LineUserID,
 		LineMessageID:  e.LineMessageID,
 		SourceText:     e.SourceText,
-		DiaryText:      e.DiaryText,
+		AIComment:      e.AIComment,
 		EntryCreatedAt: e.CreatedAt,
 		EntryUpdatedAt: e.UpdatedAt,
 	}
@@ -58,7 +58,7 @@ func toDomain(m entryModel) *domain.DiaryEntry {
 		LineUserID:    m.LineUserID,
 		LineMessageID: m.LineMessageID,
 		SourceText:    m.SourceText,
-		DiaryText:     m.DiaryText,
+		AIComment:     m.AIComment,
 		CreatedAt:     m.EntryCreatedAt,
 		UpdatedAt:     m.EntryUpdatedAt,
 	}
@@ -152,7 +152,7 @@ func (r *EntryRepository) List(ctx context.Context, userID string, limit int, cu
 		// % と _ はILIKEのワイルドカードなのでエスケープする（! をエスケープ文字として使用）
 		escaped := strings.NewReplacer("!", "!!", "%", "!%", "_", "!_").Replace(filter.Query)
 		like := "%" + escaped + "%"
-		q = q.Where("(source_text ILIKE ? ESCAPE '!' OR diary_text ILIKE ? ESCAPE '!')", like, like)
+		q = q.Where("(source_text ILIKE ? ESCAPE '!' OR ai_comment ILIKE ? ESCAPE '!')", like, like)
 	}
 	if filter.DateFrom != nil {
 		q = q.Where("created_at >= ?", filter.DateFrom)
