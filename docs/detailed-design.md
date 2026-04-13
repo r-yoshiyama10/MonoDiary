@@ -5,8 +5,8 @@
 | 文書名 | MonoDiary 詳細設計書 |
 | ファイル | `docs/detailed-design.md` |
 | プロジェクト名 | MonoDiary |
-| 版 | 0.3 |
-| 最終更新日 | 2026-04-04 |
+| 版 | 0.4 |
+| 最終更新日 | 2026-04-13 |
 | 参照 | [`docs/requirements.md`](requirements.md)（要件定義書 v0.4）、[`docs/basic-design.md`](basic-design.md)（基本設計書 v0.4） |
 
 ---
@@ -157,7 +157,7 @@ Webhook は「不正署名」の場合 **401** を返してよい（LINE の再�
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "source_text": "朝 コーヒー。午後は仕事。",
-      "diary_text": "今日は朝からコーヒーを飲んで、午後は仕事に集中した一日だった。",
+      "ai_comment": "コーヒーで始まる朝、仕事に集中できた一日だったんですね。",
       "created_at": "2026-04-04T09:00:00+09:00",
       "updated_at": "2026-04-04T09:00:05+09:00"
     }
@@ -168,6 +168,7 @@ Webhook は「不正署名」の場合 **401** を返してよい（LINE の再�
 
 - `next_cursor` が `null` または省略で最終ページ。
 - 一覧では `source_text` が長い場合でも**全文返却**でよい（初版）。肥大化時は `summary` フィールド追加を別タスクとする。
+- `ai_comment` は生成失敗時に空文字または `null` で返す（フォールバック。第 6 章参照）。
 
 **カーソル方式（推奨実装）**
 
@@ -188,7 +189,7 @@ Webhook は「不正署名」の場合 **401** を返してよい（LINE の再�
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "source_text": "…",
-  "diary_text": "…",
+  "ai_comment": "…",
   "created_at": "2026-04-04T09:00:00+09:00",
   "updated_at": "2026-04-04T09:00:05+09:00"
 }
@@ -229,15 +230,15 @@ Webhook は「不正署名」の場合 **401** を返してよい（LINE の再�
 ### 5.3 ユースケース内処理順
 
 1. 冪等チェック（既存なら終了）。
-2. Gemini で `diary_text` 生成（第 6 章）。
-3. ストアへ `DiaryEntry` 保存（`source_text`, `diary_text`, `line_user_id`, `line_message_id`, `created_at`）。
+2. Gemini で `ai_comment` 生成（第 6 章）。失敗時は空文字でフォールバック（原文保存は必ず行う）。
+3. ストアへ `DiaryEntry` 保存（`source_text`, `ai_comment`, `line_user_id`, `line_message_id`, `created_at`）。
 4. トランザクション境界は **1 トランザクション**にまとめる。
 
 **タイムアウト**: Webhook ハンドラ全体で **25 秒**を上限目安とし、Gemini は第 6 章の個別タイムアウトより短く設定する。
 
 ---
 
-## 6. Gemini（日記生成）
+## 6. Gemini（AI コメント生成）
 
 ### 6.1 API
 
@@ -249,19 +250,29 @@ Webhook は「不正署名」の場合 **401** を返してよい（LINE の再�
 | 項目 | 値 |
 |------|-----|
 | モデル ID | `gemini-2.5-flash`（利用不可の場合は `gemini-2.0-flash` や `gemini-1.5-flash` にフォールバックする実装でも可。デプロイ時に確定） |
-| 生成設定 | `temperature`: 0.7 前後（調整可能） |
-| 最大出力トークン | 2048（要件に応じて変更） |
+| 生成設定 | `temperature`: 0.9 前後（調整可能） |
+| 最大出力トークン | 256（一言コメントのため短く抑える） |
 
 ### 6.3 システム指示・ユーザコンテンツ（プロンプト骨子）
 
 **システム（固定文の例・実装時に定数化）**
 
 ```
-あなたは日本語の日記執筆アシスタントです。
-ユーザーが LINE で送った断片的なメモや箇条書きを、一人称の日記として自然に読める1つの文章に整えてください。
-内容は捏造せず、与えられた事実のみを扱ってください。
-文体は「です・ます」調で統一してください。
-日付や見出しは付けず、本文のみを出力してください。
+あなたは日記を読んで一言コメントを添える友人のような存在です。
+ユーザーが LINE で送った日記（日常のメモや出来事）を読み、
+その内容に対して 1〜2 文の短いコメントを日本語で返してください。
+
+【コメントのスタイル】
+- 書いた人の気持ちに寄り添う、温かみのある口調にしてください
+- 共感・ねぎらい・小さな気づきなどを含めると自然です
+- 説教や過度なアドバイスはしないでください
+- 「ですます」調でも「だよね」「だね」調でも、自然な方でよいです
+- 日付・見出しは付けず、コメント本文のみ出力してください
+
+【禁止事項】
+- 原文の書き換えや要約はしないでください
+- 内容の捏造・補完はしないでください
+- マークダウン記法は使わないでください
 ```
 
 **ユーザー**
@@ -270,13 +281,13 @@ Webhook は「不正署名」の場合 **401** を返してよい（LINE の再�
 
 **出力**
 
-- プレーンテキストのみ（マークダウン禁止。違反時は後処理でタグ除去してもよい）。
+- プレーンテキストのみ（1〜2 文）。マークダウン禁止。違反時は後処理でタグ除去してもよい。
 
 ### 6.4 失敗時・タイムアウト
 
 | 状況 | 挙動 |
 |------|------|
-| タイムアウト（例: 20 秒） | リトライ **1 回**（指数バックオフ 1 秒）。それでも失敗なら `diary_text` に **原文をコピー**し、先頭に `[自動整形に失敗したため原文を表示しています]\n` を付与（要件 F-04 の保存を満たす）。 |
+| タイムアウト（例: 20 秒） | リトライ **1 回**（バックオフ 1 秒）。それでも失敗なら `ai_comment` を **空文字**でフォールバック保存（原文は必ず保存する）。 |
 | 429 / 5xx | 上記と同様にリトライ後、同じフォールバック。 |
 | レスポンス空 | フォールバック同上。 |
 
@@ -295,8 +306,8 @@ Webhook は「不正署名」の場合 **401** を返してよい（LINE の再�
 | `id` | UUID | ○ | 新規作成時にサーバー生成 |
 | `line_user_id` | string | ○ | 送信者 |
 | `line_message_id` | string \| null | △ | 取得できれば必ず設定。UNIQUE 用 |
-| `source_text` | string | ○ | 原文 |
-| `diary_text` | string | ○ | LLM 出力またはフォールバック本文 |
+| `source_text` | string | ○ | 原文（LINE で送ったテキストをそのまま保存） |
+| `ai_comment` | string | ○ | LLM が生成した一言コメント（失敗時は空文字） |
 | `created_at` | time | ○ | Webhook 受信時刻（サーバー時刻でよい） |
 | `updated_at` | time | ○ | 更新がなければ `created_at` と同値 |
 
@@ -312,7 +323,7 @@ CREATE TABLE diary_entries (
     line_user_id    VARCHAR(255) NOT NULL,
     line_message_id VARCHAR(255),
     source_text     TEXT NOT NULL,
-    diary_text      TEXT NOT NULL,
+    ai_comment      TEXT NOT NULL DEFAULT '',
     created_at      TIMESTAMPTZ NOT NULL,
     updated_at      TIMESTAMPTZ NOT NULL,
     CONSTRAINT uq_diary_entries_line_message_id UNIQUE (line_message_id)
@@ -321,6 +332,8 @@ CREATE TABLE diary_entries (
 CREATE INDEX idx_diary_entries_user_created
     ON diary_entries (line_user_id, created_at DESC, id DESC);
 ```
+
+> **マイグレーション方針**: 既存 `diary_entries` テーブルには `diary_text` カラムが存在する。新規マイグレーション（`000002_add_ai_comment_drop_diary_text.up.sql`）で `ai_comment` カラムを追加し、`diary_text` カラムを削除する。
 
 - `line_message_id` が NULL の行は UNIQUE に複数存在可能（PostgreSQL の UNIQUE は NULL を非等価扱い）。
 
@@ -331,7 +344,7 @@ CREATE INDEX idx_diary_entries_user_created
 | ポート（interface） | 主なメソッド（例） |
 |----------------------|-------------------|
 | `EntryRepository` | `Create(ctx, *DiaryEntry) error`, `FindByID(ctx, userID, id) (*DiaryEntry, error)`, `List(ctx, userID, limit, cursor) (items, nextCursor, error)`, `ExistsByLineMessageID(ctx, messageID) (bool, error)` |
-| `DiaryGenerator` | `GenerateDiaryText(ctx, source string) (string, error)` |
+| `DiaryGenerator` | `GenerateComment(ctx, source string) (string, error)`（一言コメント生成。失敗時は空文字と error を返す） |
 | `SessionStore` | `CreateSession(w, r, lineUserID) error`, `GetLineUserID(r) (string, error)`, `Destroy(w, r) error` |
 
 `adapter/line` は Webhook 署名・イベントパースのみ。`usecase` は上記ポートのみに依存する。
@@ -357,8 +370,8 @@ CREATE INDEX idx_diary_entries_user_created
 
 ### 9.3 UI 要件（最小）
 
-- 一覧: `created_at` 降順、`diary_text` の先頭数行プレビュー（全文でも可）。
-- 詳細: `source_text` と `diary_text` を並べて表示（ラベル「原文」「日記」）。
+- 一覧: `created_at` 降順、`source_text` のプレビューのみ表示。AI コメントは表示しない（シンプルに保つ）。
+- 詳細: `source_text`（日記本文）を主に表示し、`ai_comment` を「AI からのひとこと」などのラベルで別セクションとして添える。`ai_comment` が空の場合はコメント欄を非表示にする。
 
 ---
 
@@ -418,5 +431,6 @@ E2E は任意（Playwright + モック API 等）。
 | 版 | 日付 | 内容 |
 |----|------|------|
 | 0.3 | 2026-04-04 | 永続化を PostgreSQL のみに統一。Sheets・フェーズ A/B 記述を削除（要件・基本設計 v0.4 に整合） |
+| 0.4 | 2026-04-13 | Gemini の役割を「日記整形」から「一言コメント生成」へ変更。`diary_text` → `ai_comment` に置き換え。プロンプト・DDL・ポート・API レスポンス・UI 要件を全面更新 |
 | 0.2 | 2026-04-04 | Gemini 既定モデルを `gemini-2.5-flash` に変更 |
 | 0.1 | 2026-04-04 | 初版（基本設計 v0.3 に基づき API・セッション・Gemini・DB/Sheets・フロントを確定） |
