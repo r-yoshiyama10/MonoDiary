@@ -23,7 +23,7 @@ type entryHandler struct {
 type entryItem struct {
 	ID         string `json:"id"`
 	SourceText string `json:"source_text"`
-	DiaryText  string `json:"diary_text"`
+	AIComment  string `json:"ai_comment"`
 	CreatedAt  string `json:"created_at"`
 	UpdatedAt  string `json:"updated_at"`
 }
@@ -32,7 +32,7 @@ func toEntryItem(e *domain.DiaryEntry) entryItem {
 	return entryItem{
 		ID:         e.ID,
 		SourceText: e.SourceText,
-		DiaryText:  e.DiaryText,
+		AIComment:  e.AIComment,
 		CreatedAt:  e.CreatedAt.UTC().Format(time.RFC3339),
 		UpdatedAt:  e.UpdatedAt.UTC().Format(time.RFC3339),
 	}
@@ -45,7 +45,7 @@ type CreateEntryRequest struct {
 type CreateEntryResponse struct {
 	ID         string `json:"id"`
 	SourceText string `json:"source_text"`
-	DiaryText  string `json:"diary_text"`
+	AIComment  string `json:"ai_comment"`
 	CreatedAt  string `json:"created_at"`
 }
 
@@ -58,9 +58,9 @@ func (h *entryHandler) create(c echo.Context) error {
 		return httperr.BadRequest(c, "source_text は必須です")
 	}
 
-	diaryText, err := h.gen.GenerateDiaryText(c.Request().Context(), req.SourceText)
+	comment, err := h.gen.GenerateComment(c.Request().Context(), req.SourceText)
 	if err != nil {
-		return httperr.Internal(c, "日記テキストの生成に失敗しました")
+		return httperr.Internal(c, "AIコメントの生成に失敗しました")
 	}
 
 	userID, _ := c.Get(ctxKeyUserID).(string)
@@ -70,7 +70,7 @@ func (h *entryHandler) create(c echo.Context) error {
 	entry := &domain.DiaryEntry{
 		LineUserID: userID,
 		SourceText: req.SourceText,
-		DiaryText:  diaryText,
+		AIComment:  comment,
 	}
 	if err := h.repo.Create(c.Request().Context(), entry); err != nil {
 		return httperr.Internal(c, "エントリの保存に失敗しました")
@@ -79,7 +79,7 @@ func (h *entryHandler) create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, CreateEntryResponse{
 		ID:         entry.ID,
 		SourceText: entry.SourceText,
-		DiaryText:  entry.DiaryText,
+		AIComment:  entry.AIComment,
 		CreatedAt:  entry.CreatedAt.UTC().Format(time.RFC3339),
 	})
 }
