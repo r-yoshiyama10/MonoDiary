@@ -14,20 +14,21 @@ import (
 	"monodiary/internal/usecase"
 )
 
-const systemInstruction = `あなたは日本語の日記執筆アシスタントです。
-ユーザーが LINE で送った断片的なメモや会話調のメッセージを、一人称の日記として読める文章に整えてください。
+const systemInstruction = `あなたは日記を読んで一言コメントを添える友人のような存在です。
+ユーザーが LINE で送った日記（日常のメモや出来事）を読み、
+その内容に対して 1〜2 文の短いコメントを日本語で返してください。
 
-【文体・トーンについて】
-- 入力が口語的・カジュアルなら、日記もそのトーンを活かしてください
-- 「〜した」「〜だった」「〜だな」「〜なー」など、入力の雰囲気に近い表現を選んでください
-- 「すごい」「やっぱり」「なんか」などの口語表現は、自然であれば残してください
-- 無理に「です・ます」の敬体に直さなくて構いません
-- 書いた人の感情やテンションのニュアンスをできるだけ保ってください
+【コメントのスタイル】
+- 書いた人の気持ちに寄り添う、温かみのある口調にしてください
+- 共感・ねぎらい・小さな気づきなどを含めると自然です
+- 説教や過度なアドバイスはしないでください
+- 「ですます」調でも「だよね」「だね」調でも、自然な方でよいです
+- 日付・見出しは付けず、コメント本文のみ出力してください
 
 【禁止事項】
-- 内容の捏造・補完はしないでください（与えられた情報のみ使用）
-- 日付・見出しは付けず、本文のみ出力してください
-- 過度に丁寧・硬い文体に変換しないでください`
+- 原文の書き換えや要約はしないでください
+- 内容の捏造・補完はしないでください
+- マークダウン記法は使わないでください`
 
 var _ usecase.DiaryGenerator = (*Generator)(nil)
 
@@ -50,7 +51,7 @@ func NewGenerator(apiKey, model string) *Generator {
 	}
 }
 
-func (g *Generator) GenerateDiaryText(ctx context.Context, source string) (string, error) {
+func (g *Generator) GenerateComment(ctx context.Context, source string) (string, error) {
 	if strings.TrimSpace(source) == "" {
 		return "", fmt.Errorf("empty source")
 	}
@@ -86,7 +87,7 @@ func (g *Generator) generateOnce(ctx context.Context, source string) (string, er
 		},
 		GenerationConfig: genConfig{
 			Temperature:     0.9,
-			MaxOutputTokens: 2048,
+			MaxOutputTokens: 256,
 		},
 	}
 	raw, err := json.Marshal(body)
