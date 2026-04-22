@@ -8,13 +8,14 @@ import type { DiaryEntry } from '../types/entry'
 function formatDateParts(iso: string) {
   const d = new Date(iso)
   return {
-    year: d.toLocaleDateString('ja-JP', { year: 'numeric' }),
-    monthDay: d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }),
+    year: d.getFullYear(),
+    monthStr: `${d.getMonth() + 1}月`,
+    day: d.getDate(),
     weekday: d.toLocaleDateString('ja-JP', { weekday: 'short' }),
   }
 }
 
-function excerpt(text: string, len = 80) {
+function excerpt(text: string, len = 65) {
   return text.length > len ? text.slice(0, len) + '…' : text
 }
 
@@ -79,18 +80,26 @@ export function EntriesPage() {
     <Layout>
       {/* ヘッダー行 */}
       <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-stone-800">日記一覧</h2>
+        <div>
+          <p style={{ fontSize: 10, color: '#a89a8c', letterSpacing: '0.12em', marginBottom: 4 }}>
+            {new Date().getFullYear()}年{new Date().getMonth() + 1}月
+          </p>
+          <h2 style={{ fontSize: 19, fontWeight: 700, color: '#1a160e', letterSpacing: '-0.01em', fontFamily: "'Noto Sans JP', sans-serif" }}>
+            日記一覧
+          </h2>
+        </div>
         <button
           type="button"
           onClick={() => setSearchOpen((o) => !o)}
-          className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-1.5 text-sm text-stone-500 shadow-[0_1px_4px_rgba(120,100,80,0.06)] transition hover:bg-stone-50 hover:text-stone-700"
+          className="flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm transition hover:opacity-80"
+          style={{ borderColor: '#e4dace', background: '#fffef9', color: '#6b6254', boxShadow: '0 1px 4px rgba(80,60,20,0.06)' }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0">
             <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
           </svg>
           <span>絞り込み</span>
           {isFiltered && (
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-stone-700 text-[10px] font-semibold text-white">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold text-white" style={{ background: '#c49a50' }}>
               {[appliedSearch.q, appliedSearch.dateFrom, appliedSearch.dateTo, appliedSearch.sort === 'asc' ? '1' : ''].filter(Boolean).length}
             </span>
           )}
@@ -109,24 +118,27 @@ export function EntriesPage() {
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${searchOpen ? 'max-h-[500px] opacity-100 mb-6' : 'max-h-0 opacity-0 mb-0'}`}>
         <form
           onSubmit={handleSearch}
-          className="rounded-2xl bg-white p-5 ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)] space-y-4"
+          className="rounded-2xl p-5 space-y-4"
+          style={{ background: '#fffef9', border: '1px solid #e4dace', boxShadow: '0 2px 12px rgba(80,60,20,0.07)' }}
         >
           {/* フリーワード */}
           <div>
-            <label className="block mb-1 text-xs font-medium text-stone-500">キーワード</label>
+            <label className="block mb-1 text-xs font-medium" style={{ color: '#6b6254' }}>キーワード</label>
             <div className="relative">
               <input
                 type="text"
                 value={form.q}
                 onChange={(e) => setForm((f) => ({ ...f, q: e.target.value }))}
                 placeholder="日記・原文を検索…"
-                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 pr-8 text-sm text-stone-800 placeholder-stone-300 outline-none focus:border-stone-400 focus:bg-white transition"
+                className="w-full rounded-xl px-3 py-2 pr-8 text-sm outline-none transition"
+                style={{ border: '1px solid #e4dace', background: '#f4ede0', color: '#1a160e' }}
               />
               {form.q && (
                 <button
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, q: '' }))}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-300 hover:text-stone-500 transition"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 transition"
+                  style={{ color: '#a89a8c' }}
                   aria-label="クリア"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
@@ -140,50 +152,46 @@ export function EntriesPage() {
           {/* 日付範囲 */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
-              <label className="block mb-1 text-xs font-medium text-stone-500">開始日</label>
+              <label className="block mb-1 text-xs font-medium" style={{ color: '#6b6254' }}>開始日</label>
               <input
                 type="date"
                 value={form.dateFrom}
                 max={form.dateTo || undefined}
                 onChange={(e) => setForm((f) => ({ ...f, dateFrom: e.target.value }))}
-                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-400 focus:bg-white transition"
+                className="w-full rounded-xl px-3 py-2 text-sm outline-none transition"
+                style={{ border: '1px solid #e4dace', background: '#f4ede0', color: '#1a160e' }}
               />
             </div>
             <div className="flex-1">
-              <label className="block mb-1 text-xs font-medium text-stone-500">終了日</label>
+              <label className="block mb-1 text-xs font-medium" style={{ color: '#6b6254' }}>終了日</label>
               <input
                 type="date"
                 value={form.dateTo}
                 min={form.dateFrom || undefined}
                 onChange={(e) => setForm((f) => ({ ...f, dateTo: e.target.value }))}
-                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-400 focus:bg-white transition"
+                className="w-full rounded-xl px-3 py-2 text-sm outline-none transition"
+                style={{ border: '1px solid #e4dace', background: '#f4ede0', color: '#1a160e' }}
               />
             </div>
           </div>
 
           {/* ソート順 */}
           <div className="flex items-center gap-3">
-            <label className="text-xs font-medium text-stone-500 shrink-0">並び順</label>
-            <div className="flex rounded-xl border border-stone-200 overflow-hidden text-sm">
+            <label className="text-xs font-medium shrink-0" style={{ color: '#6b6254' }}>並び順</label>
+            <div className="flex rounded-xl overflow-hidden text-sm" style={{ border: '1px solid #e4dace' }}>
               <button
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, sort: 'desc' }))}
-                className={`px-4 py-1.5 transition ${
-                  form.sort !== 'asc'
-                    ? 'bg-stone-800 text-white'
-                    : 'bg-white text-stone-500 hover:bg-stone-50'
-                }`}
+                className="px-4 py-1.5 transition"
+                style={form.sort !== 'asc' ? { background: '#3d2e1e', color: '#f0e4cc' } : { background: '#fffef9', color: '#6b6254' }}
               >
                 新しい順
               </button>
               <button
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, sort: 'asc' }))}
-                className={`px-4 py-1.5 transition ${
-                  form.sort === 'asc'
-                    ? 'bg-stone-800 text-white'
-                    : 'bg-white text-stone-500 hover:bg-stone-50'
-                }`}
+                className="px-4 py-1.5 transition"
+                style={form.sort === 'asc' ? { background: '#3d2e1e', color: '#f0e4cc' } : { background: '#fffef9', color: '#6b6254' }}
               >
                 古い順
               </button>
@@ -195,7 +203,8 @@ export function EntriesPage() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-stone-800 px-5 py-2 text-sm text-white transition hover:bg-stone-700 disabled:opacity-40"
+              className="rounded-xl px-5 py-2 text-sm transition disabled:opacity-40"
+              style={{ background: '#3d2e1e', color: '#f0e4cc' }}
             >
               検索
             </button>
@@ -203,7 +212,8 @@ export function EntriesPage() {
               <button
                 type="button"
                 onClick={handleReset}
-                className="rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm text-stone-500 transition hover:bg-stone-50"
+                className="rounded-xl px-5 py-2 text-sm transition"
+                style={{ border: '1px solid #e4dace', background: '#fffef9', color: '#6b6254' }}
               >
                 リセット
               </button>
@@ -216,14 +226,25 @@ export function EntriesPage() {
         <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
       )}
 
+      {/* 区切り線 */}
+      {!loading && entries.length > 0 && (
+        <div className="flex items-center gap-2.5 mb-4">
+          <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, #c49a50, transparent)' }} />
+          <span style={{ fontSize: 10, color: '#a89a8c', fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic' }}>
+            {entries.length} entries
+          </span>
+          <div style={{ flex: 1, height: 1, background: 'linear-gradient(270deg, #c49a50, transparent)' }} />
+        </div>
+      )}
+
       {!loading && entries.length === 0 && !error && (
-        <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-stone-200 shadow-[0_2px_12px_rgba(120,100,80,0.07)]">
+        <div className="rounded-2xl p-10 text-center" style={{ background: '#fffef9', border: '1px solid #e4dace', boxShadow: '0 2px 12px rgba(80,60,20,0.07)' }}>
           {isFiltered ? (
-            <p className="text-stone-400">条件に一致する日記が見つかりませんでした。</p>
+            <p style={{ color: '#a89a8c' }}>条件に一致する日記が見つかりませんでした。</p>
           ) : (
             <>
-              <p className="text-stone-400">まだ日記がありません。</p>
-              <p className="mt-1 text-sm text-stone-300">
+              <p style={{ color: '#a89a8c' }}>まだ日記がありません。</p>
+              <p className="mt-1 text-sm" style={{ color: '#c0a870' }}>
                 LINE にメッセージを送って最初の日記を作りましょう。
               </p>
             </>
@@ -231,25 +252,53 @@ export function EntriesPage() {
         </div>
       )}
 
-      <ul className="space-y-3">
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
         {entries.map((entry) => {
-          const { year, monthDay, weekday } = formatDateParts(entry.created_at)
+          const { monthStr, day, weekday } = formatDateParts(entry.created_at)
           return (
             <li key={entry.id}>
-              <Link
-                to={`/entries/${entry.id}`}
-                className="block overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(120,100,80,0.07)] ring-1 ring-stone-200 transition hover:ring-stone-300 hover:shadow-[0_4px_16px_rgba(120,100,80,0.12)] outline-none focus-visible:ring-2 focus-visible:ring-stone-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f4ef]"
-              >
-                <div className="flex items-stretch">
+              <Link to={`/entries/${entry.id}`} className="block outline-none focus-visible:ring-2 focus-visible:ring-offset-2" style={{ borderRadius: 12 }}>
+                <div style={{
+                  background: '#fffef9',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 4px rgba(80,60,20,0.08), 0 4px 14px rgba(80,60,20,0.05)',
+                  border: '1px solid #e4dace',
+                  display: 'flex',
+                }}>
                   {/* 日付カラム */}
-                  <div className="flex min-w-[84px] flex-col items-center justify-center gap-0.5 bg-[#f7f4ef] px-4 py-5 border-r border-stone-100">
-                    <span className="text-[10px] text-stone-400">{year}</span>
-                    <span className="text-sm font-semibold text-stone-700 leading-snug">{monthDay}</span>
-                    <span className="text-[10px] text-stone-400">{weekday}</span>
+                  <div style={{
+                    width: 75,
+                    flexShrink: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '16px 0',
+                    borderRight: '1px solid #e4dace',
+                    gap: 3,
+                  }}>
+                    <span style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 11, fontWeight: 600, color: '#c49a50', letterSpacing: '0.04em' }}>
+                      {monthStr}
+                    </span>
+                    <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 400, color: '#1a160e', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                      {day}
+                    </span>
+                    <span style={{ fontSize: 10, color: '#a89a8c', fontFamily: "'Noto Sans JP', sans-serif" }}>
+                      ({weekday})
+                    </span>
                   </div>
+
                   {/* 本文カラム */}
-                  <div className="flex flex-1 items-center px-5 py-5">
-                    <p className="text-sm leading-relaxed text-stone-600">{excerpt(entry.source_text)}</p>
+                  <div style={{ flex: 1, padding: '14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8 }}>
+                    <p style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 13, lineHeight: 1.88, color: '#352a18' }}>
+                      {excerpt(entry.source_text, 65)}
+                    </p>
+                    {entry.ai_comment && (
+                      <p style={{ fontSize: 10, color: '#a89a8c', fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic' }}>
+                        — AIコメントあり
+                      </p>
+                    )}
                   </div>
                 </div>
               </Link>
@@ -263,7 +312,8 @@ export function EntriesPage() {
           <button
             onClick={() => load(cursor ?? undefined, appliedSearch)}
             disabled={loading}
-            className="rounded-xl border border-stone-300 bg-white px-6 py-2 text-sm text-stone-600 transition hover:bg-stone-50 disabled:opacity-40"
+            className="rounded-xl px-6 py-2 text-sm transition disabled:opacity-40"
+            style={{ border: '1px solid #e4dace', background: '#fffef9', color: '#6b6254' }}
           >
             {loading ? '読み込み中…' : 'もっと見る'}
           </button>
@@ -272,7 +322,7 @@ export function EntriesPage() {
 
       {loading && entries.length === 0 && (
         <div className="flex justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-stone-300 border-t-stone-700" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4" style={{ borderColor: '#e4dace', borderTopColor: '#c49a50' }} />
         </div>
       )}
     </Layout>

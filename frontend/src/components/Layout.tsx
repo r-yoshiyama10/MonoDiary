@@ -17,19 +17,16 @@ export function Layout({ children }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f4ef]">
-      <header className="border-b border-stone-200 bg-[#faf8f5]">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
+    <div className="min-h-screen bg-[#f4ede0]">
+      <header style={{ background: '#3d2e1e', borderBottom: '1px solid #4e3c28' }}>
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4" style={{ height: 56 }}>
           <span
-            className="cursor-pointer text-lg font-semibold tracking-tight text-stone-800"
+            style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600, color: '#f0e4cc', letterSpacing: '0.05em', cursor: 'pointer' }}
             onClick={() => navigate('/entries')}
           >
             MonoDiary
           </span>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-stone-400 transition hover:text-stone-700"
-          >
+          <button onClick={handleLogout} style={{ fontSize: 11, color: '#7a6040' }}>
             ログアウト
           </button>
         </div>
