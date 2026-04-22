@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MonoDiary — 完成デザイン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Noto+Serif+JP:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; } body { background: #1a1a18; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+
+const entries = [
+  { id: '1', created_at: '2026-04-22T20:30:00+09:00', source_text: '今日は朝から雨だった。出かけるのが億劫だったけど、傘を差して近所のパン屋まで歩いた。焼きたてのクロワッサンの匂いに包まれて、少しだけ気持ちが楽になった。', ai_comment: '雨の日の小さな外出、すごく好きです。億劫だったのに動けた自分を褒めてあげてください。焼きたてのパンの匂い、一緒に嗅ぎたかったな。' },
+  { id: '2', created_at: '2026-04-20T22:15:00+09:00', source_text: '友達と久しぶりに電話した。2時間も話してしまって、気づいたら深夜になっていた。他愛のない話ばかりだったけど、それが一番楽しかった。', ai_comment: null },
+  { id: '3', created_at: '2026-04-18T09:00:00+09:00', source_text: '仕事でミスをしてしまい、かなり落ち込んだ一日だった。上司に謝って、なんとか解決できたけど、夜になってもまだ引きずっている気がする。', ai_comment: '大変だったね。でも謝れて、解決できたなら十分じゃないかな。夜に引きずるのも、それだけ真剣に向き合っている証拠だと思う。' },
+  { id: '4', created_at: '2026-04-15T18:45:00+09:00', source_text: '桜がまだ少し残っていた。散り際の花びらが風に舞うのを、しばらくぼーっと眺めていた。', ai_comment: null },
+]
+
+function fmt(iso) {
+  const d = new Date(iso)
+  return {
+    year: d.getFullYear(),
+    monthStr: `${d.getMonth() + 1}月`,
+    day: d.getDate(),
+    dayStr: `${d.getDate()}日`,
+    weekday: d.toLocaleDateString('ja-JP', { weekday: 'short' }),
+    // 「4月22日（水）」形式
+    fullJa: d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }),
+  }
+}
+function exc(t, n = 65) { return t.length > n ? t.slice(0, n) + '…' : t }
+
+const C = {
+  bg: '#f4ede0',
+  card: '#fffef9',
+  border: '#e4dace',
+  ink: '#1a160e',
+  mid: '#6b6254',
+  light: '#a89a8c',
+  accent: '#c49a50',
+  header: '#3d2e1e',
+  headerText: '#f0e4cc',
+  headerSub: '#7a6040',
+}
+
+/* ─── ヘッダー ─── */
+function Header() {
+  return (
+    <header style={{ background: C.header, borderBottom: `1px solid #4e3c28` }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56, padding: '0 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600, color: C.headerText, letterSpacing: '0.05em' }}>MonoDiary</span>
+        </div>
+        <span style={{ fontSize: 11, color: C.headerSub }}>ログアウト</span>
+      </div>
+    </header>
+  )
+}
+
+/* ─── 日記カード ─── */
+function EntryCard({ entry }) {
+  const p = fmt(entry.created_at)
+  return (
+    <div style={{ background: C.card, borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 4px rgba(80,60,20,0.08), 0 4px 14px rgba(80,60,20,0.05)', border: `1px solid ${C.border}`, display: 'flex' }}>
+      {/* 日付カラム */}
+      <div style={{ width: 75, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 0', borderRight: `1px solid ${C.border}`, gap: 3 }}>
+        <span style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 11, fontWeight: 600, color: C.accent, letterSpacing: '0.04em' }}>{p.monthStr}</span>
+        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 400, color: C.ink, lineHeight: 1, letterSpacing: '-0.02em' }}>{p.day}</span>
+        <span style={{ fontSize: 10, color: C.light }}>({p.weekday})</span>
+      </div>
+      {/* 本文 */}
+      <div style={{ flex: 1, padding: '14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8 }}>
+        <p style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 13, lineHeight: 1.88, color: '#352a18' }}>{exc(entry.source_text)}</p>
+        {entry.ai_comment && (
+          <p style={{ fontSize: 10, color: C.light, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic' }}>— AIコメントあり</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── 一覧ページ ─── */
+function ListPage() {
+  return (
+    <div style={{ background: C.bg, minHeight: 812, display: 'flex', flexDirection: 'column', fontFamily: "'Noto Sans JP', sans-serif" }}>
+      <Header />
+      <div style={{ padding: '22px 16px', flex: 1 }}>
+        {/* タイトル行 */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div>
+            <p style={{ fontSize: 10, color: C.light, letterSpacing: '0.12em', marginBottom: 4 }}>2026年4月</p>
+            <h2 style={{ fontSize: 19, fontWeight: 700, color: C.ink, letterSpacing: '-0.01em' }}>日記一覧</h2>
+          </div>
+          <button style={{ display: 'flex', alignItems: 'center', gap: 5, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '6px 13px', fontSize: 12, color: C.mid, cursor: 'pointer', boxShadow: '0 1px 3px rgba(80,60,20,0.06)' }}>
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" /></svg>
+            絞り込み
+          </button>
+        </div>
+        {/* 区切り */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+          <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${C.accent}, transparent)` }} />
+          <span style={{ fontSize: 10, color: C.light, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic' }}>4 entries</span>
+          <div style={{ flex: 1, height: 1, background: `linear-gradient(270deg, ${C.accent}, transparent)` }} />
+        </div>
+        {/* カードリスト */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          {entries.map(e => <EntryCard key={e.id} entry={e} />)}
+        </div>
+        {/* もっと見る */}
+        <div style={{ marginTop: 20, textAlign: 'center' }}>
+          <button style={{ fontSize: 12, color: C.mid, background: 'none', border: `1px solid ${C.border}`, borderRadius: 20, padding: '8px 22px', cursor: 'pointer' }}>もっと見る</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── 詳細ページ ─── */
+function DetailPage() {
+  const entry = entries[0]
+  const p = fmt(entry.created_at)
+  return (
+    <div style={{ background: C.bg, minHeight: 812, fontFamily: "'Noto Sans JP', sans-serif" }}>
+      <Header />
+      <div style={{ padding: '20px 16px' }}>
+        {/* ナビ */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+          <span style={{ fontSize: 12, color: C.mid, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clipRule="evenodd" /></svg>
+            一覧に戻る
+          </span>
+          <span style={{ fontSize: 12, color: '#b07070', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" /></svg>
+            削除
+          </span>
+        </div>
+
+        {/* 日付ヘッダー — 「4月22日（水）」自然な日本語順 */}
+        <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${C.border}`, position: 'relative' }}>
+          {/* 上段：年 */}
+          <p style={{ fontSize: 10, color: C.light, letterSpacing: '0.1em', marginBottom: 8 }}>{p.year}年</p>
+          {/* 中段：4月22日（水） — 1行インラインspan */}
+          <p style={{ lineHeight: 1.1, marginBottom: 4 }}>
+            <span style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 15, fontWeight: 600, color: C.accent, verticalAlign: 'baseline' }}>{p.monthStr}</span>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 58, fontWeight: 300, color: C.ink, letterSpacing: '-0.02em', verticalAlign: 'baseline' }}>{p.day}</span>
+            <span style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 20, fontWeight: 300, color: C.ink, verticalAlign: 'baseline' }}>日</span>
+            <span style={{ fontFamily: "'Noto Sans JP', sans-serif", fontSize: 13, color: C.mid, marginLeft: 6, verticalAlign: 'baseline' }}>（{p.weekday}）</span>
+          </p>
+          {/* ゴールドの短いアンダーライン */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: 48, height: 2, background: `linear-gradient(90deg, ${C.accent}, transparent)` }} />
+        </div>
+
+        {/* 本文 */}
+        <div style={{ background: C.card, borderRadius: 12, padding: '20px 18px', marginBottom: 14, border: `1px solid ${C.border}`, boxShadow: '0 2px 10px rgba(80,60,20,0.07)', position: 'relative', overflow: 'hidden' }}>
+
+          <p style={{ fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c0a870', marginBottom: 16, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', paddingLeft: 6 }}>diary</p>
+          <p style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 15, lineHeight: 2.15, color: C.ink, letterSpacing: '0.03em', whiteSpace: 'pre-wrap', paddingLeft: 6 }}>{entry.source_text}</p>
+        </div>
+
+        {/* AIコメント */}
+        <div style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 16, paddingTop: 4, paddingBottom: 4 }}>
+          <p style={{ fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.accent, marginBottom: 12, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic' }}>AI comment</p>
+          <p style={{ fontFamily: "'Noto Serif JP', serif", fontSize: 13.5, lineHeight: 2.05, color: '#5c4e3a', fontStyle: 'italic' }}>{entry.ai_comment}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── APP ─── */
+function App() {
+  return (
+    <DesignCanvas title="MonoDiary — 完成デザイン">
+      <DCSection id="final" title="手帳スタイル — ウォームブラウン #3d2e1e ヘッダー">
+        <DCArtboard id="list" label="一覧ページ" width={390} height={812}>
+          <ListPage />
+        </DCArtboard>
+        <DCArtboard id="detail" label="詳細ページ" width={390} height={900}>
+          <DetailPage />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+</script>
+</body>
+</html>
