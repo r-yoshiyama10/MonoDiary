@@ -87,7 +87,7 @@ func (g *Generator) generateOnce(ctx context.Context, source string) (string, er
 		},
 		GenerationConfig: genConfig{
 			Temperature:     0.9,
-			MaxOutputTokens: 256,
+			MaxOutputTokens: 1024,
 		},
 	}
 	raw, err := json.Marshal(body)
