@@ -1,7 +1,3 @@
 .env
 /tmp/
-
-# 画像はローカルに保存する
-/images
-
 .DS_Store
