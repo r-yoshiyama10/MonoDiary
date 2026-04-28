@@ -7,20 +7,24 @@ interface Props {
 }
 
 export function RequireAuth({ children }: Props) {
-  const [status, setStatus] = useState<'loading' | 'ok' | 'unauth'>('loading')
+  const [status, setStatus] = useState<'loading' | 'ok' | 'unauth' | 'error'>('loading')
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
+    if (status !== 'loading') return
     api
       .getEntries(undefined, 1)
       .then(() => setStatus('ok'))
       .catch((e: Error) => {
         if (e.message === 'UNAUTHORIZED') {
           setStatus('unauth')
+        } else if (e instanceof TypeError) {
+          setStatus('error')
         } else {
           setStatus('ok')
         }
       })
-  }, [])
+  }, [attempt, status])
 
   if (status === 'loading') {
     return (
@@ -32,6 +36,20 @@ export function RequireAuth({ children }: Props) {
 
   if (status === 'unauth') {
     return <Navigate to="/login" replace />
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-stone-50 text-stone-600">
+        <p className="text-sm">サーバーに接続できません</p>
+        <button
+          className="text-sm underline"
+          onClick={() => { setStatus('loading'); setAttempt(a => a + 1) }}
+        >
+          再試行
+        </button>
+      </div>
+    )
   }
 
   return <>{children}</>
