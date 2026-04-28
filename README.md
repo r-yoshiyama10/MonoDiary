@@ -21,7 +21,7 @@ LINE に送ったテキストメッセージをそのまま記録し、AI が一
 | データベース | PostgreSQL  |
 | AI | Google Gemini API（gemini-2.5-flash） |
 | 外部連携 | LINE Messaging API / LINE Login |
-| インフラ | Docker / Vercel / Google Cloud Run / Supabase |
+| インフラ | Docker / Vercel / Render / Supabase |
 
 ## 機能紹介
 
@@ -94,7 +94,7 @@ LINE のトークに今日の出来事を送ると、Gemini が日記文を生�
 | レイヤー | サービス | 選定理由 |
 |---|---|---|
 | フロントエンド | Vercel | React / TypeScript をそのままデプロイできる。GitHub 連携による自動デプロイ。無料枠で永続運用可能。 |
-| バックエンド | Google Cloud Run | 既存の Go / Echo をそのまま使える。Render の無料枠と異なりスリープがなく常時応答できる。無料枠で永続運用可能。 |
+| バックエンド | Render | 既存の Go / Echo をそのまま使える。一定時間リクエストないとスリープするのが欠点。無料枠で永続運用可能。 |
 | データベース | Supabase | PostgreSQL をそのまま利用できる。無料枠で永続運用可能。 |
 
 ## 設計後に追加・変更した機能
