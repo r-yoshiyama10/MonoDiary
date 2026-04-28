@@ -18,10 +18,8 @@ export function RequireAuth({ children }: Props) {
       .catch((e: Error) => {
         if (e.message === 'UNAUTHORIZED') {
           setStatus('unauth')
-        } else if (e instanceof TypeError) {
-          setStatus('error')
         } else {
-          setStatus('ok')
+          setStatus('error')
         }
       })
   }, [attempt, status])
