@@ -17,6 +17,7 @@ import (
 func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.DiaryGenerator, repo usecase.EntryRepository) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
+	e.Logger.SetOutput(os.Stdout)
 	e.Use(middleware.Recover())
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Output: os.Stdout,
