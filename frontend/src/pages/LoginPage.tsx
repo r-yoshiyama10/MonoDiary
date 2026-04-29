@@ -1,13 +1,31 @@
 import type { ReactNode } from 'react'
 
+const ERROR_MESSAGES: Record<string, string> = {
+  state_invalid: 'ログインセッションが無効です。もう一度お試しください。',
+  code_missing: 'LINEの認証コードが取得できませんでした。',
+  token_exchange_failed: 'LINEとの認証に失敗しました。',
+  profile_fetch_failed: 'LINEのユーザー情報を取得できませんでした。',
+  session_create_failed: 'セッションの作成に失敗しました。',
+}
+
 export function LoginPage() {
   const handleLogin = () => {
     window.location.href = '/auth/line'
   }
 
+  const errorCode = new URLSearchParams(window.location.search).get('error')
+  const errorMessage = errorCode ? (ERROR_MESSAGES[errorCode] ?? 'ログインに失敗しました。もう一度お試しください。') : null
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#f7f4ef] px-4 py-12">
       <div className="w-full max-w-md space-y-6">
+
+        {/* エラーバナー */}
+        {errorMessage && (
+          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">
+            {errorMessage}
+          </div>
+        )}
 
         {/* ヘッダー */}
         <div className="text-center">
