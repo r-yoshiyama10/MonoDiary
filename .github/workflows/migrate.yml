@@ -1,0 +1,27 @@
+name: Apply DB Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/internal/infrastructure/postgres/migrations/**'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install migrate CLI
+        run: |
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.1/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate /usr/local/bin/migrate
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          migrate -path backend/internal/infrastructure/postgres/migrations \
+                  -database "$DATABASE_URL" \
+                  up
