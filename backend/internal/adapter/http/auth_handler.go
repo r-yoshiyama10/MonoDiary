@@ -64,37 +64,41 @@ func (h *authHandler) login(c echo.Context) error {
 
 // callback はLINEから受け取ったcodeを検証し、セッションCookieを発行する。
 func (h *authHandler) callback(c echo.Context) error {
+	frontendOrigin := h.cfg.FrontendOrigin
+	if frontendOrigin == "" {
+		frontendOrigin = "http://localhost:5173"
+	}
+	redirectError := func(code string) error {
+		return c.Redirect(http.StatusFound, frontendOrigin+"/login?error="+code)
+	}
+
 	// state検証（CSRF対策）
 	stateCookie, err := c.Cookie(stateCookieName)
 	if err != nil || stateCookie.Value != c.QueryParam("state") {
-		return httperr.BadRequest(c, "stateが不正です")
+		return redirectError("state_invalid")
 	}
 	c.SetCookie(&http.Cookie{Name: stateCookieName, Value: "", MaxAge: -1, Path: "/"})
 
 	code := c.QueryParam("code")
 	if code == "" {
-		return httperr.BadRequest(c, "codeが取得できませんでした")
+		return redirectError("code_missing")
 	}
 
 	accessToken, err := exchangeToken(c.Request().Context(), h.cfg, code)
 	if err != nil {
-		return httperr.Internal(c, "トークン交換に失敗しました")
+		return redirectError("token_exchange_failed")
 	}
 
 	lineUserID, err := fetchLineUserID(c.Request().Context(), accessToken)
 	if err != nil {
-		return httperr.Internal(c, "ユーザー情報の取得に失敗しました")
+		return redirectError("profile_fetch_failed")
 	}
 
 	if err := h.sessionStore.Create(c.Response(), c.Request(), lineUserID); err != nil {
-		return httperr.Internal(c, "セッションの作成に失敗しました")
+		return redirectError("session_create_failed")
 	}
 
-	redirectTo := h.cfg.FrontendOrigin
-	if redirectTo == "" {
-		redirectTo = "http://localhost:5173"
-	}
-	return c.Redirect(http.StatusFound, redirectTo+"/entries")
+	return c.Redirect(http.StatusFound, frontendOrigin+"/entries")
 }
 
 // logout はセッションCookieを削除する。
