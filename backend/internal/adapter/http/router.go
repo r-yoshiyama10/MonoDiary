@@ -2,6 +2,7 @@ package httpadapter
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -17,7 +18,9 @@ func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.Diary
 	e := echo.New()
 	e.HideBanner = true
 	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Output: os.Stdout,
+	}))
 
 	// CORS（フロントエンドからのリクエストを許可）
 	corsOrigin := cfg.CORSAllowedOrigin
