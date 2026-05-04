@@ -47,6 +47,7 @@ type WebhookHandler struct {
 	channelSecret      string
 	channelAccessToken string
 	frontendOrigin     string
+	allowedUserID      string
 	repo               usecase.EntryRepository
 	gen                usecase.DiaryGenerator
 }
@@ -55,6 +56,7 @@ func NewWebhookHandler(
 	channelSecret string,
 	channelAccessToken string,
 	frontendOrigin string,
+	allowedUserID string,
 	repo usecase.EntryRepository,
 	gen usecase.DiaryGenerator,
 ) *WebhookHandler {
@@ -62,6 +64,7 @@ func NewWebhookHandler(
 		channelSecret:      channelSecret,
 		channelAccessToken: channelAccessToken,
 		frontendOrigin:     frontendOrigin,
+		allowedUserID:      allowedUserID,
 		repo:               repo,
 		gen:                gen,
 	}
@@ -101,6 +104,12 @@ func (h *WebhookHandler) Handle(c echo.Context) error {
 func (h *WebhookHandler) processEvent(ctx context.Context, event lineEvent) error {
 	// テキストメッセージ以外はスキップ
 	if event.Type != "message" || event.Message.Type != "text" {
+		return nil
+	}
+
+	// 許可されていないユーザーはサイレント無視
+	if h.allowedUserID != "" && event.Source.UserID != h.allowedUserID {
+		log.Printf("webhook: unauthorized userId=%s, skipping", event.Source.UserID)
 		return nil
 	}
 
