@@ -49,5 +49,16 @@ services:
       - app
     restart: unless-stopped
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    command: http app:8080
+    env_file:
+      - ./backend/.env
+    ports:
+      - "4040:4040"
+    depends_on:
+      - app
+    restart: unless-stopped
+
 volumes:
   postgres_data:
