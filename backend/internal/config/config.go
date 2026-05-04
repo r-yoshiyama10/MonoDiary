@@ -22,6 +22,8 @@ type Config struct {
 	SessionSecret      string
 	FrontendOrigin     string
 	CORSAllowedOrigin  string
+	// アクセス制限
+	AllowedLineUserID  string
 }
 
 func Load() (Config, error) {
@@ -50,6 +52,7 @@ func Load() (Config, error) {
 		SessionSecret:     os.Getenv("SESSION_SECRET"),
 		FrontendOrigin:    os.Getenv("FRONTEND_ORIGIN"),
 		CORSAllowedOrigin: os.Getenv("CORS_ALLOWED_ORIGIN"),
+		AllowedLineUserID: os.Getenv("LINE_ALLOWED_USER_ID"),
 	}, nil
 }
 
