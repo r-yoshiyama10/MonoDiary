@@ -94,6 +94,10 @@ func (h *authHandler) callback(c echo.Context) error {
 		return redirectError("profile_fetch_failed")
 	}
 
+	if h.cfg.AllowedLineUserID != "" && lineUserID != h.cfg.AllowedLineUserID {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "このアプリへのアクセスは許可されていません"})
+	}
+
 	if err := h.sessionStore.Create(c.Response(), c.Request(), lineUserID); err != nil {
 		return redirectError("session_create_failed")
 	}
