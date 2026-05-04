@@ -39,7 +39,7 @@ func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.Diary
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	wh := lineadapter.NewWebhookHandler(cfg.LineChannelSecret, cfg.LineChannelAccessToken, cfg.FrontendOrigin, repo, gen)
+	wh := lineadapter.NewWebhookHandler(cfg.LineChannelSecret, cfg.LineChannelAccessToken, cfg.FrontendOrigin, cfg.AllowedLineUserID, repo, gen)
 	e.POST("/webhooks/line", wh.Handle)
 
 	// 認証ルート（セッション不要）
