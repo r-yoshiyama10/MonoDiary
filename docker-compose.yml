@@ -53,7 +53,7 @@ services:
     image: ngrok/ngrok:latest
     command: http app:8080
     env_file:
-      - ./backend/.env
+      - ./.env
     ports:
       - "4040:4040"
     depends_on:
