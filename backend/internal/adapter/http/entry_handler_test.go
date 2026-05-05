@@ -22,6 +22,7 @@ type mockRepo struct {
 	deleteFn                func(ctx context.Context, userID, id string) (bool, error)
 	listFn                  func(ctx context.Context, userID string, limit int, cursor string, filter usecase.ListFilter) ([]*domain.DiaryEntry, string, error)
 	existsByLineMessageIDFn func(ctx context.Context, messageID string) (bool, error)
+	heatmapByMonthFn        func(ctx context.Context, userID string, year, month int) ([]usecase.HeatmapDay, error)
 }
 
 func (m *mockRepo) Create(ctx context.Context, entry *domain.DiaryEntry) error {
@@ -38,6 +39,12 @@ func (m *mockRepo) List(ctx context.Context, userID string, limit int, cursor st
 }
 func (m *mockRepo) ExistsByLineMessageID(ctx context.Context, messageID string) (bool, error) {
 	return m.existsByLineMessageIDFn(ctx, messageID)
+}
+func (m *mockRepo) HeatmapByMonth(ctx context.Context, userID string, year, month int) ([]usecase.HeatmapDay, error) {
+	if m.heatmapByMonthFn != nil {
+		return m.heatmapByMonthFn(ctx, userID, year, month)
+	}
+	return nil, nil
 }
 
 type mockGen struct {
