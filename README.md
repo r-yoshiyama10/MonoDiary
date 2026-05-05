@@ -37,7 +37,7 @@ QR コードから MonoDiary を LINE 友だち追加し、LINE でログイン�
 
 ### LINE で日記を記録する
 
-LINE のトークに今日の出来事を送ると、Gemini が日記文を生成してすぐに返信します。返信には「Web アプリで見る」ボタンが付いており、詳細画面へそのまま遷移できます。
+LINE のトークに今日の出来事を送ると、Gemini がコメントを生成してすぐに返信します。返信には「Web アプリで見る」ボタンが付いており、詳細画面へそのまま遷移できます。
 
 <p align="center">
   <img src="images/image_line.jpg" alt="LINE での日記送信と返信" width="360" />
@@ -67,7 +67,7 @@ LINE のトークに今日の出来事を送ると、Gemini が日記文を生�
 
 ### 日記詳細
 
-日記の詳細画面では、Gemini が生成した本文と AI コメントをあわせて確認できます。
+日記の詳細画面では、ユーザーが書いた本文と AI コメントをあわせて確認できます。
 
 <p align="center">
   <img src="images/image_front1.png" alt="日記詳細画面" width="700" />
