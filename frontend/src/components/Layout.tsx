@@ -3,9 +3,10 @@ import { api } from '../lib/api'
 
 interface Props {
   children: React.ReactNode
+  wide?: boolean
 }
 
-export function Layout({ children }: Props) {
+export function Layout({ children, wide }: Props) {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -31,7 +32,7 @@ export function Layout({ children }: Props) {
           </button>
         </div>
       </header>
-      <main className="mx-auto max-w-2xl px-4 py-8">{children}</main>
+      <main className={`mx-auto px-4 py-8 ${wide ? 'max-w-4xl' : 'max-w-2xl'}`}>{children}</main>
     </div>
   )
 }

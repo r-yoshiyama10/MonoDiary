@@ -168,6 +168,39 @@ func (h *entryHandler) delete(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func (h *entryHandler) heatmap(c echo.Context) error {
+	now := time.Now().UTC()
+	year := now.Year()
+	month := int(now.Month())
+
+	if y := c.QueryParam("year"); y != "" {
+		v, err := strconv.Atoi(y)
+		if err != nil || v < 2000 || v > 2100 {
+			return httperr.BadRequest(c, "year は整数で指定してください")
+		}
+		year = v
+	}
+	if m := c.QueryParam("month"); m != "" {
+		v, err := strconv.Atoi(m)
+		if err != nil || v < 1 || v > 12 {
+			return httperr.BadRequest(c, "month は 1〜12 の整数で指定してください")
+		}
+		month = v
+	}
+
+	userID, ok := c.Get(ctxKeyUserID).(string)
+	if !ok || userID == "" {
+		return httperr.Respond(c, http.StatusUnauthorized, "UNAUTHORIZED", "ログインが必要です", nil)
+	}
+
+	days, err := h.repo.HeatmapByMonth(c.Request().Context(), userID, year, month)
+	if err != nil {
+		return httperr.Internal(c, "ヒートマップの取得に失敗しました")
+	}
+
+	return c.JSON(http.StatusOK, days)
+}
+
 func (h *entryHandler) findByID(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {

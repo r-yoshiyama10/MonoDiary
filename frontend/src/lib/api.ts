@@ -1,5 +1,10 @@
 import type { DiaryEntry, EntriesResponse } from '../types/entry'
 
+export interface HeatmapDay {
+  date: string
+  total_chars: number
+}
+
 const BASE = ''
 
 /** API が 4xx/5xx を返したときに投げる（401 は従来どおり {@link Error} message `UNAUTHORIZED`）。 */
@@ -58,6 +63,11 @@ export const api = {
 
   deleteEntry: (id: string): Promise<void> =>
     request<void>(`/api/entries/${id}`, { method: 'DELETE' }),
+
+  getHeatmap: (year: number, month: number): Promise<HeatmapDay[]> => {
+    const params = new URLSearchParams({ year: String(year), month: String(month) })
+    return request<HeatmapDay[]>(`/api/entries/heatmap?${params}`)
+  },
 
   logout: (): Promise<void> =>
     request<void>('/auth/logout', { method: 'POST' }),

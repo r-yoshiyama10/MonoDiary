@@ -138,6 +138,34 @@ func decodeCursor(cursor string) (cursorPayload, error) {
 	return p, nil
 }
 
+func (r *EntryRepository) HeatmapByMonth(ctx context.Context, userID string, year, month int) ([]usecase.HeatmapDay, error) {
+	start := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	end := start.AddDate(0, 1, 0)
+
+	type row struct {
+		Date       string `gorm:"column:date"`
+		TotalChars int    `gorm:"column:total_chars"`
+	}
+
+	var rows []row
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT DATE(created_at) AS date, SUM(LENGTH(source_text)) AS total_chars
+		FROM diary_entries
+		WHERE line_user_id = ? AND created_at >= ? AND created_at < ?
+		GROUP BY DATE(created_at)
+		ORDER BY date
+	`, userID, start, end).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	days := make([]usecase.HeatmapDay, len(rows))
+	for i, r := range rows {
+		days[i] = usecase.HeatmapDay{Date: r.Date, TotalChars: r.TotalChars}
+	}
+	return days, nil
+}
+
 func (r *EntryRepository) List(ctx context.Context, userID string, limit int, cursor string, filter usecase.ListFilter) ([]*domain.DiaryEntry, string, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
