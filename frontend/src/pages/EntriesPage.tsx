@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { SearchParams } from '../lib/api'
 import { Layout } from '../components/Layout'
+import { ActivityCalendar } from '../components/ActivityCalendar'
 import type { DiaryEntry } from '../types/entry'
 
 function formatDateParts(iso: string) {
@@ -77,7 +78,12 @@ export function EntriesPage() {
     !!appliedSearch.q || !!appliedSearch.dateFrom || !!appliedSearch.dateTo || appliedSearch.sort === 'asc'
 
   return (
-    <Layout>
+    <Layout wide>
+      <div className="flex flex-col md:flex-row md:items-start md:gap-6">
+
+      {/* メインコンテンツ */}
+      <div className="flex-1 min-w-0">
+
       {/* ヘッダー行 */}
       <div className="mb-5 flex items-center justify-between">
         <div>
@@ -325,6 +331,15 @@ export function EntriesPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4" style={{ borderColor: '#e4dace', borderTopColor: '#c49a50' }} />
         </div>
       )}
+
+      </div>{/* メインコンテンツ end */}
+
+      {/* カレンダー */}
+      <div className="md:w-64 shrink-0 md:sticky md:top-8">
+        <ActivityCalendar />
+      </div>
+
+      </div>{/* flex container end */}
     </Layout>
   )
 }
