@@ -53,6 +53,7 @@ func NewServer(cfg config.Config, sessionStore *session.Store, gen usecase.Diary
 	api := e.Group("/api")
 	api.Use(requireAuth(sessionStore))
 	api.GET("/entries", h.list)
+	api.GET("/entries/heatmap", h.heatmap)
 	api.GET("/entries/:id", h.findByID)
 	api.DELETE("/entries/:id", h.delete)
 

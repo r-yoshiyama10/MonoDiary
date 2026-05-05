@@ -29,6 +29,12 @@ type ListFilter struct {
 	SortOrder string     // "asc" or "desc"（省略時は "desc"）
 }
 
+// HeatmapDay は1日分のヒートマップデータ。
+type HeatmapDay struct {
+	Date       string `json:"date"`
+	TotalChars int    `json:"total_chars"`
+}
+
 // EntryRepository は詳細設計 8 章のポート。
 type EntryRepository interface {
 	Create(ctx context.Context, entry *domain.DiaryEntry) error
@@ -36,4 +42,5 @@ type EntryRepository interface {
 	Delete(ctx context.Context, userID, id string) (found bool, err error)
 	List(ctx context.Context, userID string, limit int, cursor string, filter ListFilter) (items []*domain.DiaryEntry, nextCursor string, err error)
 	ExistsByLineMessageID(ctx context.Context, messageID string) (bool, error)
+	HeatmapByMonth(ctx context.Context, userID string, year, month int) ([]HeatmapDay, error)
 }
